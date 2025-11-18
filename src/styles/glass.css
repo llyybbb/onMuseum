@@ -1,0 +1,38 @@
+.glass {
+  position: fixed;
+  top: 50%;
+  background: rgba(255, 254, 254, 0.356);
+  backdrop-filter: brightness(1.1) blur(2px) url(#liquid-glass);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 32px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 3);
+  box-shadow: inset 3px 3px 30px rgb(219, 219, 219);
+  padding: 40px;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  text-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  border-radius: 29px;
+  box-shadow: inset 6px 6px 0px -6px rgba(207, 207, 207, 0.8),
+    inset 0 0 8px 1px rgba(207, 207, 207, 0.7);
+}
+
+.card {
+  flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow: hidden;
+  border-radius: inherit;
+  border-radius: 32px;
+  filter: url(#liquid-glass) drop-shadow(-8px -10px 46px #0000005f);
+  backdrop-filter: brightness(1.) blur(2px);
+}
