@@ -1,6 +1,12 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import '../styles/glass.css'
 
+import { Swiper, SwiperSlide } from 'swiper/react'
+import 'swiper/css'
+
+import { EffectCoverflow, Navigation, Pagination } from 'swiper/modules'
+import 'swiper/css/effect-coverflow'
+
 export default function ExhibitionHall() {
   return (
     <>
@@ -19,7 +25,80 @@ export default function ExhibitionHall() {
                 <ChevronRight className="size-[24px] text-white" />
               </div>
             </div>
-            <div className="h-[536px]"></div>
+            <Swiper
+              loop={true}
+              effect={'coverflow'}
+              grabCursor={true}
+              centeredSlides={true}
+              slidesPerView={4}
+              coverflowEffect={{
+                rotate: 30,
+                stretch: 0,
+                depth: 100,
+                modifier: 1,
+                slideShadows: true,
+              }}
+              pagination={true}
+              navigation={true}
+              modules={[EffectCoverflow, Pagination, Navigation]}
+              className="swiper"
+            >
+              <SwiperSlide className="swiper-slide">
+                <img
+                  src="https://swiperjs.com/demos/images/nature-1.jpg"
+                  loading="lazy"
+                />
+              </SwiperSlide>
+              <SwiperSlide className="swiper-slide">
+                <img
+                  src="https://swiperjs.com/demos/images/nature-2.jpg"
+                  loading="lazy"
+                />
+              </SwiperSlide>
+              <SwiperSlide className="swiper-slide">
+                <img
+                  src="https://swiperjs.com/demos/images/nature-3.jpg"
+                  loading="lazy"
+                />
+              </SwiperSlide>
+              <SwiperSlide className="swiper-slide">
+                <img
+                  src="https://swiperjs.com/demos/images/nature-4.jpg"
+                  loading="lazy"
+                />
+              </SwiperSlide>
+              <SwiperSlide className="swiper-slide">
+                <img
+                  src="https://swiperjs.com/demos/images/nature-5.jpg"
+                  loading="lazy"
+                />
+              </SwiperSlide>
+              <SwiperSlide className="swiper-slide">
+                <img
+                  src="https://swiperjs.com/demos/images/nature-6.jpg"
+                  loading="lazy"
+                />
+              </SwiperSlide>
+              <SwiperSlide className="swiper-slide">
+                <img
+                  src="https://swiperjs.com/demos/images/nature-7.jpg"
+                  loading="lazy"
+                />
+              </SwiperSlide>
+              <SwiperSlide className="swiper-slide">
+                <img
+                  src="https://swiperjs.com/demos/images/nature-8.jpg"
+                  loading="lazy"
+                />
+              </SwiperSlide>
+              <SwiperSlide className="swiper-slide">
+                <img
+                  src="https://swiperjs.com/demos/images/nature-9.jpg"
+                  loading="lazy"
+                />
+              </SwiperSlide>
+            </Swiper>
+
             <div className="glass w-[434px] h-[94px] p-[20x] flex justify-between items-center"></div>
           </div>
         </div>

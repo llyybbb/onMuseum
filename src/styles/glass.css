@@ -3,7 +3,7 @@
 
   --glass-radius: 40px;
   --glass-border: 1px;
-  --glass-bg: rgba(255, 255, 255, 0.2);
+  --glass-bg: rgba(255, 255, 255, 0.15);
   --glass-bg2: rgba(255, 255, 255, 0.35);
   --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
 
@@ -68,8 +68,8 @@
   background: linear-gradient(var(--glass-bg), var(--glass-bg2));
 
   /* blur */
-  backdrop-filter: blur(100px) saturate(200%);
-  -webkit-backdrop-filter: blur(12px) saturate(200%);
+  backdrop-filter: blur(20px);
+  /* -webkit-backdrop-filter: blur(12px) saturate(200%); */
 
   z-index: 1;
 }
@@ -89,4 +89,21 @@
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
+}
+
+.swiper {
+  width: 984px;
+}
+
+.swiper-slide {
+  background-position: center;
+  background-size: cover;
+  width: 100%;
+  height: 100%;
+}
+
+.swiper-slide img {
+  display: block;
+  width: 100%;
+  height: 480px;
 }
