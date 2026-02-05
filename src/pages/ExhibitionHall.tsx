@@ -8,6 +8,18 @@ import { EffectCoverflow, Navigation, Pagination } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
 
 export default function ExhibitionHall() {
+  const images = [
+    'https://swiperjs.com/demos/images/nature-1.jpg',
+    'https://swiperjs.com/demos/images/nature-2.jpg',
+    'https://swiperjs.com/demos/images/nature-3.jpg',
+    'https://swiperjs.com/demos/images/nature-4.jpg',
+    'https://swiperjs.com/demos/images/nature-5.jpg',
+    'https://swiperjs.com/demos/images/nature-6.jpg',
+    'https://swiperjs.com/demos/images/nature-7.jpg',
+    'https://swiperjs.com/demos/images/nature-8.jpg',
+    'https://swiperjs.com/demos/images/nature-9.jpg',
+  ]
+
   return (
     <>
       <div
@@ -26,77 +38,31 @@ export default function ExhibitionHall() {
               </div>
             </div>
             <Swiper
-              loop={true}
-              effect={'coverflow'}
-              grabCursor={true}
-              centeredSlides={true}
-              slidesPerView={4}
+              loop
+              effect="coverflow"
+              grabCursor
+              centeredSlides
+              slidesPerView={2.5}
               coverflowEffect={{
-                rotate: 30,
-                stretch: 0,
-                depth: 100,
+                rotate: -20,
+                stretch: 100,
+                depth: 300,
                 modifier: 1,
-                slideShadows: true,
+                slideShadows: false,
+                scale:1
               }}
-              pagination={true}
-              navigation={true}
+              pagination
+              navigation
               modules={[EffectCoverflow, Pagination, Navigation]}
               className="swiper"
             >
-              <SwiperSlide className="swiper-slide">
-                <img
-                  src="https://swiperjs.com/demos/images/nature-1.jpg"
-                  loading="lazy"
-                />
-              </SwiperSlide>
-              <SwiperSlide className="swiper-slide">
-                <img
-                  src="https://swiperjs.com/demos/images/nature-2.jpg"
-                  loading="lazy"
-                />
-              </SwiperSlide>
-              <SwiperSlide className="swiper-slide">
-                <img
-                  src="https://swiperjs.com/demos/images/nature-3.jpg"
-                  loading="lazy"
-                />
-              </SwiperSlide>
-              <SwiperSlide className="swiper-slide">
-                <img
-                  src="https://swiperjs.com/demos/images/nature-4.jpg"
-                  loading="lazy"
-                />
-              </SwiperSlide>
-              <SwiperSlide className="swiper-slide">
-                <img
-                  src="https://swiperjs.com/demos/images/nature-5.jpg"
-                  loading="lazy"
-                />
-              </SwiperSlide>
-              <SwiperSlide className="swiper-slide">
-                <img
-                  src="https://swiperjs.com/demos/images/nature-6.jpg"
-                  loading="lazy"
-                />
-              </SwiperSlide>
-              <SwiperSlide className="swiper-slide">
-                <img
-                  src="https://swiperjs.com/demos/images/nature-7.jpg"
-                  loading="lazy"
-                />
-              </SwiperSlide>
-              <SwiperSlide className="swiper-slide">
-                <img
-                  src="https://swiperjs.com/demos/images/nature-8.jpg"
-                  loading="lazy"
-                />
-              </SwiperSlide>
-              <SwiperSlide className="swiper-slide">
-                <img
-                  src="https://swiperjs.com/demos/images/nature-9.jpg"
-                  loading="lazy"
-                />
-              </SwiperSlide>
+              {images.map((src, index) => (
+                <SwiperSlide key={index}>
+                  <div className="slide-inner">
+                    <img src={src} loading="lazy" />
+                  </div>
+                </SwiperSlide>
+              ))}
             </Swiper>
 
             <div className="glass w-[434px] h-[94px] p-[20x] flex justify-between items-center"></div>

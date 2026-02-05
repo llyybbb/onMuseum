@@ -92,18 +92,32 @@
 }
 
 .swiper {
-  width: 984px;
+  width: 80%;
+  height: 50%;
+  overflow-y: visible;
+  box-sizing: border-box;
 }
 
-.swiper-slide {
+.swiper .swiper-slide {
   background-position: center;
   background-size: cover;
-  width: 100%;
+}
+
+.slide-inner {
   height: 100%;
+  transition: transform 300ms ease;
+  border-radius: 30px;
+  opacity: 0.8;
+  overflow: hidden;
+}
+
+.swiper-slide-active .slide-inner {
+  opacity: 1;
 }
 
 .swiper-slide img {
   display: block;
+  object-fit: cover;
   width: 100%;
-  height: 480px;
+  height: 100%;
 }
