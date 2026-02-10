@@ -1,4 +1,3 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import '../styles/glass.css'
 
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -7,6 +6,7 @@ import 'swiper/css/navigation'
 import 'swiper/css/pagination'
 import { EffectCoverflow, Navigation, Pagination } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
+import ChevronBtn from '../components/common/ChevronBtn'
 
 export default function ExhibitionHall() {
   const images = [
@@ -29,14 +29,10 @@ export default function ExhibitionHall() {
       >
         <div className="h-screen w-screen bg-black/25 backdrop-blur-[3px]">
           <div className="h-full w-full flex flex-col items-center justify-center gap-[40px]">
-            <div className="glass w-[984px] h-[80px] flex justify-between items-center px-[20px] ">
-              <div className="size-[44px] rounded-[100%] bg-[var(--glass-button-color)] shadow-xl backdrop-blur-md flex justify-center items-center ">
-                <ChevronLeft className="size-[24px] text-white" />
-              </div>
+            <div className="glass w-[984px] h-[80px] flex justify-between items-center px-[20px] rounded-[40px]">
+              <ChevronBtn direction="left" btnSize="44px" chevronSize="24px" />
               <div className="w-[700px] h-[50px] search-box"></div>
-              <div className="size-[44px] rounded-[100%] bg-[var(--glass-button-color)] shadow-xl backdrop-blur-md flex justify-center items-center">
-                <ChevronRight className="size-[24px] text-white" />
-              </div>
+              <ChevronBtn direction="right" btnSize="44px" chevronSize="24px" />
             </div>
             <Swiper
               loop
@@ -67,7 +63,20 @@ export default function ExhibitionHall() {
               ))}
             </Swiper>
 
-            <div className="glass w-[434px] h-[94px] p-[20x] flex justify-between items-center"></div>
+            <div className="glass w-[434px] h-[98px] p-[20x] flex justify-between items-center px-[20px] rounded-[40px]">
+              <ChevronBtn direction="left" btnSize="35px" chevronSize="20px" />
+              <div className="flex justify-between gap-[20px] items-center">
+                <div className='glass size-[75px] rounded-[20px] overflow-hidden items-center shadow-2xl'>
+                  <img src='/vanGogh.png' className='object-cover'/>
+                </div>
+                <div className="flex flex-col">
+                  <p className="text-white font-semibold text-[18px] mb-[4px]">vincent ban gogh</p>
+                  <p className="text-white text-[16px]">1853-1920</p>
+                  <p className='text-white text-[16px]'>his hometown</p>
+                </div>
+              </div>
+              <ChevronBtn direction="right" btnSize="35px" chevronSize="20px" />
+            </div>
           </div>
         </div>
       </div>
