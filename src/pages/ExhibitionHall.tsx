@@ -1,4 +1,5 @@
 import '../styles/glass.css'
+import '../styles/swiper-custom.css'
 
 import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'

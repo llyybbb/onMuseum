@@ -71,46 +71,4 @@
   mask-composite: exclude;
 }
 
-.swiper {
-  width: 80%;
-  height: 50%;
-  overflow: visible;
-  box-sizing: border-box;
-}
 
-.swiper .swiper-slide {
-  width: 440px;
-  background-position: center;
-  background-size: cover;
-}
-
-.slide-inner {
-  height: 100%;
-  transition: background-image 500ms ease;
-  border-radius: 30px;
-  overflow: hidden;
-  background-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 100% )
-}
-
-.swiper-slide-prev .slide-inner{
-  border-radius: 30px;
-  background-image: linear-gradient(to right, rgba(0,0,0,0.3) 0%,  rgba(0,0,0,1) 100%);
-}
-
-.swiper-slide-next .slide-inner{
-  border-radius: 30px;
-  background-image: linear-gradient(to left, rgba(0,0,0,0.3) 0%,  rgba(0,0,0,1) 100%);
-}
-
-.swiper-slide img {
-  display: block;
-  object-fit: cover;
-  width: 100%;
-  height: 100%;
-  transition: opacity 500ms ease;
-  opacity: 0.6;
-}
-
-.swiper-slide-active .slide-inner img {
-  opacity: 1;
-}
