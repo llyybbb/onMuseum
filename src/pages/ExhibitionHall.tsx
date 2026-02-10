@@ -3,7 +3,8 @@ import '../styles/glass.css'
 
 import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'
-
+import 'swiper/css/navigation'
+import 'swiper/css/pagination'
 import { EffectCoverflow, Navigation, Pagination } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
 
@@ -42,17 +43,18 @@ export default function ExhibitionHall() {
               effect="coverflow"
               grabCursor
               centeredSlides
-              slidesPerView={2.5}
+              slidesPerView="auto"
+              spaceBetween={50}
               coverflowEffect={{
-                rotate: -20,
-                stretch: 100,
+                rotate: -15,
+                stretch: 0,
                 depth: 300,
                 modifier: 1,
                 slideShadows: false,
-                scale:1
+                scale: 0.9,
               }}
-              pagination
-              navigation
+              pagination={true}
+              navigation={true}
               modules={[EffectCoverflow, Pagination, Navigation]}
               className="swiper"
             >

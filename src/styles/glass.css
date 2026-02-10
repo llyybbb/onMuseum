@@ -28,7 +28,8 @@
     rgba(255,255,255,0.6) 5%,
     rgba(255,255,255,0.0) 15%
   ); */
-  --glass-border-grad: radial-gradient(
+  --glass-border-grad:
+    radial-gradient(
       120% 120% at top left,
       rgba(255, 255, 255, 0.45) 0%,
       rgba(255, 255, 255, 0.7) 18%,
@@ -86,7 +87,9 @@
   background: var(--glass-border-grad);
 
   /* 마스크로 가운데를 뚫어서 border만 남김 */
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
 }
@@ -94,25 +97,32 @@
 .swiper {
   width: 80%;
   height: 50%;
-  overflow-y: visible;
+  overflow: visible;
   box-sizing: border-box;
 }
 
 .swiper .swiper-slide {
+  width: 440px;
   background-position: center;
   background-size: cover;
 }
 
 .slide-inner {
   height: 100%;
-  transition: transform 300ms ease;
+  transition: background-image 500ms ease;
   border-radius: 30px;
-  opacity: 0.8;
   overflow: hidden;
+  background-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 100% )
 }
 
-.swiper-slide-active .slide-inner {
-  opacity: 1;
+.swiper-slide-prev .slide-inner{
+  border-radius: 30px;
+  background-image: linear-gradient(to right, rgba(0,0,0,0.3) 0%,  rgba(0,0,0,1) 100%);
+}
+
+.swiper-slide-next .slide-inner{
+  border-radius: 30px;
+  background-image: linear-gradient(to left, rgba(0,0,0,0.3) 0%,  rgba(0,0,0,1) 100%);
 }
 
 .swiper-slide img {
@@ -120,4 +130,10 @@
   object-fit: cover;
   width: 100%;
   height: 100%;
+  transition: opacity 500ms ease;
+  opacity: 0.6;
+}
+
+.swiper-slide-active .slide-inner img {
+  opacity: 1;
 }
