@@ -8,6 +8,7 @@ import 'swiper/css/pagination'
 import { EffectCoverflow, Navigation, Pagination } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
 import ChevronBtn from '../components/common/ChevronBtn'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function ExhibitionHall() {
   const images = [
@@ -35,45 +36,59 @@ export default function ExhibitionHall() {
               <div className="w-[700px] h-[50px] search-box"></div>
               <ChevronBtn direction="right" btnSize="44px" chevronSize="24px" />
             </div>
-            <Swiper
-              loop
-              effect="coverflow"
-              grabCursor
-              centeredSlides
-              slidesPerView="auto"
-              spaceBetween={50}
-              coverflowEffect={{
-                rotate: -15,
-                stretch: 0,
-                depth: 300,
-                modifier: 1,
-                slideShadows: false,
-                scale: 0.9,
-              }}
-              pagination={true}
-              navigation={true}
-              modules={[EffectCoverflow, Pagination, Navigation]}
-              className="swiper"
-            >
-              {images.map((src, index) => (
-                <SwiperSlide key={index}>
-                  <div className="slide-inner">
-                    <img src={src} loading="lazy" />
-                  </div>
-                </SwiperSlide>
-              ))}
-            </Swiper>
+
+            <div className="relative w-[80%] h-[50%]">
+              <div className="btn-prev absolute top-1/2 -translate-y-1/2 left-25 z-20">
+                <div className="size-[50px] rounded-[100%] glass flex justify-center items-center">
+                  <ChevronLeft color="white" />
+                </div>
+              </div>
+              <Swiper
+                loop
+                effect="coverflow"
+                grabCursor
+                centeredSlides
+                slidesPerView="auto"
+                spaceBetween={50}
+                coverflowEffect={{
+                  rotate: -15,
+                  stretch: 0,
+                  depth: 300,
+                  modifier: 1,
+                  slideShadows: false,
+                  scale: 0.9,
+                }}
+                navigation={{ nextEl: '.btn-next', prevEl: '.btn-prev' }}
+                modules={[EffectCoverflow, Navigation]}
+                className="swiper absolute left-1/2 -translate-x-1/2"
+              >
+                {images.map((src, index) => (
+                  <SwiperSlide key={index}>
+                    <div className="slide-inner">
+                      <img src={src} loading="lazy" />
+                    </div>
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+              <div className="btn-next absolute top-1/2 -translate-y-1/2 right-25 z-20">
+                <div className="size-[50px] rounded-[100%] glass flex justify-center items-center">
+                  <ChevronRight color="white" />
+                </div>
+              </div>
+            </div>
 
             <div className="glass w-[434px] h-[98px] p-[20x] flex justify-between items-center px-[20px] rounded-[40px]">
               <ChevronBtn direction="left" btnSize="35px" chevronSize="20px" />
               <div className="flex justify-between gap-[20px] items-center">
-                <div className='glass size-[75px] rounded-[20px] overflow-hidden items-center shadow-2xl'>
-                  <img src='/vanGogh.png' className='object-cover'/>
+                <div className="glass size-[75px] rounded-[20px] overflow-hidden items-center shadow-2xl">
+                  <img src="/vanGogh.png" className="object-cover" />
                 </div>
                 <div className="flex flex-col">
-                  <p className="text-white font-semibold text-[18px] mb-[4px]">vincent ban gogh</p>
+                  <p className="text-white font-semibold text-[18px] mb-[4px]">
+                    vincent ban gogh
+                  </p>
                   <p className="text-white text-[16px]">1853-1920</p>
-                  <p className='text-white text-[16px]'>his hometown</p>
+                  <p className="text-white text-[16px]">his hometown</p>
                 </div>
               </div>
               <ChevronBtn direction="right" btnSize="35px" chevronSize="20px" />
