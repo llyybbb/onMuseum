@@ -2,8 +2,8 @@
   --glass-button-color: #4e4e4ebb;
 
   --glass-border: 1px;
-  --glass-bg: rgba(255, 255, 255, 0.15);
-  --glass-bg2: rgba(255, 255, 255, 0.35);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-bg2: rgba(255, 255, 255, 0.3);
   --glass-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
 
   --glass-border-grad:
@@ -47,7 +47,7 @@
 
   /* blur */
   backdrop-filter: blur(10px);
-   -webkit-backdrop-filter: blur(20px) ; 
+   -webkit-backdrop-filter: blur(10px) ; 
 
   z-index: 1;
 }
