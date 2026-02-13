@@ -5,10 +5,10 @@ import { Swiper, SwiperSlide } from 'swiper/react'
 import 'swiper/css'
 import 'swiper/css/navigation'
 import 'swiper/css/pagination'
-import { EffectCoverflow, Navigation, Pagination } from 'swiper/modules'
+import { EffectCoverflow, Navigation } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
 import ChevronBtn from '../components/common/ChevronBtn'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Maximize } from 'lucide-react'
 
 export default function ExhibitionHall() {
   const images = [
@@ -29,7 +29,7 @@ export default function ExhibitionHall() {
         style={{ backgroundImage: `url('/exhibitionBg.svg')` }}
         className="h-screen w-screen bg-cover bg-center "
       >
-        <div className="h-screen w-screen bg-black/25 backdrop-blur-[3px]">
+        <div className="h-screen w-screen bg-black/50 backdrop-blur-[3px]">
           <div className="h-full w-full flex flex-col items-center justify-center gap-[40px]">
             <div className="glass w-[984px] h-[80px] flex justify-between items-center px-[20px] rounded-[40px]">
               <ChevronBtn direction="left" btnSize="44px" chevronSize="24px" />
@@ -64,8 +64,18 @@ export default function ExhibitionHall() {
               >
                 {images.map((src, index) => (
                   <SwiperSlide key={index}>
-                    <div className="slide-inner">
+                    <div className="slide-inner relative">
                       <img src={src} loading="lazy" />
+                      <div className="absolute top-8 left-1/2 -translate-1/2 w-[104px] h-[35px] glass rounded-[25px] text-white flex justify-center items-center gap-2 cursor-pointer">
+                      <Maximize color='white' size={16}/>
+                        Expand
+                      </div>
+                      <div className="w-[430px] h-[40%] glass absolute bottom-[5px] left-1/2 -translate-x-1/2 rounded-[30px] flex flex-col gap-2 p-[20px] description">
+                        <p className="text-white font-semibold text-[30px]">
+                          Title
+                        </p>
+                        <p className="text-white">설명설명설명설명설명</p>
+                      </div>
                     </div>
                   </SwiperSlide>
                 ))}
