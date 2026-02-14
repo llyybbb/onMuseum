@@ -37,7 +37,7 @@ export default function ExhibitionHall() {
               <ChevronBtn direction="right" btnSize="44px" chevronSize="24px" />
             </div>
 
-            <div className="relative w-[80%] h-[50%]">
+            <div className="relative w-[1450px] h-[50%]">
               <div className="btn-prev absolute top-1/2 -translate-y-1/2 left-25 z-20">
                 <div className="size-[50px] rounded-[100%] glass flex justify-center items-center">
                   <ChevronLeft color="white" />
