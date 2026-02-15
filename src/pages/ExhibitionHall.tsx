@@ -9,8 +9,36 @@ import { EffectCoverflow, Navigation } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
 import ChevronBtn from '../components/common/ChevronBtn'
 import { ChevronLeft, ChevronRight, Maximize } from 'lucide-react'
+import { useLocation, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+
+type ObjectsResponse = {
+  total: number
+  objectIDs: number[]
+}
 
 export default function ExhibitionHall() {
+  const { departmentId } = useParams()
+  const location = useLocation()
+  const departmentName = location.state?.departmentName
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['metObjects', departmentId],
+    queryFn: async () => {
+      const res = await fetch(
+        `https://collectionapi.metmuseum.org/public/collection/v1/objects?departmentIds=${departmentId}
+`,
+      )
+      const json: ObjectsResponse = await res.json()
+      if (!json.total) throw new Error('검색 결과가 없습니다.')
+      console.log(json)
+      return json
+    },
+  })
+  if (isLoading) return <p>로딩 중...</p>
+  if (error) return <p>에러 발생: {(error as Error).message}</p>
+  if (!data) return <p>데이터 없음</p>
+
   const images = [
     'https://swiperjs.com/demos/images/nature-1.jpg',
     'https://swiperjs.com/demos/images/nature-2.jpg',
@@ -33,7 +61,9 @@ export default function ExhibitionHall() {
           <div className="h-full w-full flex flex-col items-center justify-center gap-[40px]">
             <div className="glass w-[984px] h-[80px] flex justify-between items-center px-[20px] rounded-[40px]">
               <ChevronBtn direction="left" btnSize="44px" chevronSize="24px" />
-              <div className="w-[700px] h-[50px] search-box"></div>
+              <div className="w-[700px] h-[50px] text-white text-[20px] flex justify-center items-center search-box">
+                {departmentName}
+              </div>
               <ChevronBtn direction="right" btnSize="44px" chevronSize="24px" />
             </div>
 
@@ -67,7 +97,7 @@ export default function ExhibitionHall() {
                     <div className="slide-inner relative">
                       <img src={src} loading="lazy" />
                       <div className="absolute top-8 left-1/2 -translate-1/2 w-[104px] h-[35px] glass rounded-[25px] text-white flex justify-center items-center gap-2 cursor-pointer">
-                      <Maximize color='white' size={16}/>
+                        <Maximize color="white" size={16} />
                         Expand
                       </div>
                       <div className="w-[430px] h-[40%] glass absolute bottom-[5px] left-1/2 -translate-x-1/2 rounded-[30px] flex flex-col gap-2 p-[20px] description">
@@ -87,21 +117,17 @@ export default function ExhibitionHall() {
               </div>
             </div>
 
-            <div className="glass w-[434px] h-[98px] p-[20x] flex justify-between items-center px-[20px] rounded-[40px]">
-              <ChevronBtn direction="left" btnSize="35px" chevronSize="20px" />
-              <div className="flex justify-between gap-[20px] items-center">
-                <div className="glass size-[75px] rounded-[20px] overflow-hidden items-center shadow-2xl">
-                  <img src="/vanGogh.png" className="object-cover" />
-                </div>
-                <div className="flex flex-col">
-                  <p className="text-white font-semibold text-[18px] mb-[4px]">
-                    vincent ban gogh
-                  </p>
-                  <p className="text-white text-[16px]">1853-1920</p>
-                  <p className="text-white text-[16px]">his hometown</p>
-                </div>
+            <div className="glass w-[434px] h-[98px] p-[20x] flex justify-center items-center gap-[20px]  px-[20px] rounded-[40px]">
+              <div className="glass size-[75px] rounded-[20px] overflow-hidden items-center shadow-2xl">
+                <img src="/vanGogh.png" className="object-cover" />
               </div>
-              <ChevronBtn direction="right" btnSize="35px" chevronSize="20px" />
+              <div className="flex flex-col">
+                <p className="text-white font-semibold text-[18px] mb-[4px]">
+                  vincent ban gogh
+                </p>
+                <p className="text-white text-[16px]">1853-1920</p>
+                <p className="text-white text-[16px]">his hometown</p>
+              </div>
             </div>
           </div>
         </div>
