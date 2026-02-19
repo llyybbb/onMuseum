@@ -34,6 +34,8 @@ function pick(obj) {
     title: obj.title,
     primaryImageSmall: obj.primaryImageSmall,
     artistDisplayName: obj.artistDisplayName,
+    artistBeginDate:obj.artistBeginDate,
+    artistEndDate: obj.artistEndDate,
     objectDate: obj.objectDate,
     medium: obj.medium,
     department: obj.department,

@@ -8,48 +8,62 @@ import 'swiper/css/pagination'
 import { EffectCoverflow, Navigation } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
 import ChevronBtn from '../components/common/ChevronBtn'
-import { ChevronLeft, ChevronRight, Maximize } from 'lucide-react'
+import { Maximize } from 'lucide-react'
 import { useLocation, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 
-type ObjectsResponse = {
-  total: number
-  objectIDs: number[]
+type MetItem = {
+  objectID: number
+  title: string
+  primaryImageSmall: string
+  artistDisplayName: string
+  artistBeginDate: string
+  artistEndDate: string
+  objectDate: string
+  medium: string
+  department: string
+}
+
+type HallResponse = {
+  meta: {
+    departmentId: number
+    page: number
+    size: number
+    total: number
+    start: number
+    end: number
+  }
+  items: MetItem[]
 }
 
 export default function ExhibitionHall() {
   const { departmentId } = useParams()
   const location = useLocation()
   const departmentName = location.state?.departmentName
+  const page = 1
+  const size = 20
+  const [activeIndex, setActiveIndex] = useState(0)
+ 
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['metObjects', departmentId],
+  const { data, isLoading, error } = useQuery<HallResponse>({
+    queryKey: ['hall', departmentId, page, size],
+    enabled: !!departmentId,
     queryFn: async () => {
       const res = await fetch(
-        `https://collectionapi.metmuseum.org/public/collection/v1/objects?departmentIds=${departmentId}
-`,
+        `/api/hall/${departmentId}?page=${page}&size=${size}`,
       )
-      const json: ObjectsResponse = await res.json()
-      if (!json.total) throw new Error('검색 결과가 없습니다.')
-      console.log(json)
-      return json
+      if (!res.ok) throw new Error('서버 요청 실패')
+      return res.json()
     },
   })
   if (isLoading) return <p>로딩 중...</p>
   if (error) return <p>에러 발생: {(error as Error).message}</p>
   if (!data) return <p>데이터 없음</p>
 
-  const images = [
-    'https://swiperjs.com/demos/images/nature-1.jpg',
-    'https://swiperjs.com/demos/images/nature-2.jpg',
-    'https://swiperjs.com/demos/images/nature-3.jpg',
-    'https://swiperjs.com/demos/images/nature-4.jpg',
-    'https://swiperjs.com/demos/images/nature-5.jpg',
-    'https://swiperjs.com/demos/images/nature-6.jpg',
-    'https://swiperjs.com/demos/images/nature-7.jpg',
-    'https://swiperjs.com/demos/images/nature-8.jpg',
-    'https://swiperjs.com/demos/images/nature-9.jpg',
-  ]
+  const items = data.items
+ const activeItem = items[activeIndex]
+  const images = 'https://swiperjs.com/demos/images/nature-1.jpg'
 
   return (
     <>
@@ -68,13 +82,7 @@ export default function ExhibitionHall() {
             </div>
 
             <div className="relative w-[1450px] h-[50%]">
-              <div className="btn-prev absolute top-1/2 -translate-y-1/2 left-25 z-20">
-                <div className="size-[50px] rounded-[100%] glass flex justify-center items-center">
-                  <ChevronLeft color="white" />
-                </div>
-              </div>
               <Swiper
-                loop
                 effect="coverflow"
                 grabCursor
                 centeredSlides
@@ -90,19 +98,29 @@ export default function ExhibitionHall() {
                 }}
                 navigation={{ nextEl: '.btn-next', prevEl: '.btn-prev' }}
                 modules={[EffectCoverflow, Navigation]}
+                onSlideChange={(swiper) => {
+                  setActiveIndex(swiper.realIndex)
+                }}
                 className="swiper absolute left-1/2 -translate-x-1/2"
               >
-                {images.map((src, index) => (
-                  <SwiperSlide key={index}>
+                {items.map((item) => (
+                  <SwiperSlide key={item.objectID}>
                     <div className="slide-inner relative">
-                      <img src={src} loading="lazy" />
+                      <img
+                        src={
+                          item.primaryImageSmall
+                            ? item.primaryImageSmall
+                            : images
+                        }
+                        loading="lazy"
+                      />
                       <div className="absolute top-8 left-1/2 -translate-1/2 w-[104px] h-[35px] glass rounded-[25px] text-white flex justify-center items-center gap-2 cursor-pointer">
                         <Maximize color="white" size={16} />
                         Expand
                       </div>
                       <div className="w-[430px] h-[40%] glass absolute bottom-[5px] left-1/2 -translate-x-1/2 rounded-[30px] flex flex-col gap-2 p-[20px] description">
                         <p className="text-white font-semibold text-[30px]">
-                          Title
+                          {item.title}
                         </p>
                         <p className="text-white">설명설명설명설명설명</p>
                       </div>
@@ -110,24 +128,30 @@ export default function ExhibitionHall() {
                   </SwiperSlide>
                 ))}
               </Swiper>
-              <div className="btn-next absolute top-1/2 -translate-y-1/2 right-25 z-20">
-                <div className="size-[50px] rounded-[100%] glass flex justify-center items-center">
-                  <ChevronRight color="white" />
-                </div>
-              </div>
             </div>
 
-            <div className="glass w-[434px] h-[98px] p-[20x] flex justify-center items-center gap-[20px]  px-[20px] rounded-[40px]">
-              <div className="glass size-[75px] rounded-[20px] overflow-hidden items-center shadow-2xl">
-                <img src="/vanGogh.png" className="object-cover" />
-              </div>
+            <div className="glass w-[434px] h-[98px] p-[20x] flex justify-between items-center gap-[20px]  px-[20px] rounded-[40px]">
+              <ChevronBtn
+                direction="left"
+                btnSize="35px"
+                chevronSize="20px"
+                className="btn-prev"
+              />
               <div className="flex flex-col">
                 <p className="text-white font-semibold text-[18px] mb-[4px]">
-                  vincent ban gogh
+                  {activeItem?.artistDisplayName || 'Unknown'}
                 </p>
-                <p className="text-white text-[16px]">1853-1920</p>
+                <p className="text-white text-[16px]">
+                  {activeItem?.artistBeginDate}-{activeItem?.artistEndDate}
+                </p>
                 <p className="text-white text-[16px]">his hometown</p>
               </div>
+              <ChevronBtn
+                direction="right"
+                btnSize="35px"
+                chevronSize="20px"
+                className="btn-next"
+              />
             </div>
           </div>
         </div>
