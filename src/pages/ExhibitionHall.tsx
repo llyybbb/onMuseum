@@ -20,7 +20,11 @@ type MetItem = {
   artistDisplayName: string
   artistBeginDate: string
   artistEndDate: string
-  objectDate: string
+  artistDisplayBio: string
+  artistRole: string
+  period: string
+  dimensions: string
+  classification: string
   medium: string
   department: string
 }
@@ -44,7 +48,6 @@ export default function ExhibitionHall() {
   const page = 1
   const size = 20
   const [activeIndex, setActiveIndex] = useState(0)
- 
 
   const { data, isLoading, error } = useQuery<HallResponse>({
     queryKey: ['hall', departmentId, page, size],
@@ -62,7 +65,7 @@ export default function ExhibitionHall() {
   if (!data) return <p>데이터 없음</p>
 
   const items = data.items
- const activeItem = items[activeIndex]
+  const activeItem = items[activeIndex]
   const images = 'https://swiperjs.com/demos/images/nature-1.jpg'
 
   return (
@@ -122,7 +125,10 @@ export default function ExhibitionHall() {
                         <p className="text-white font-semibold text-[30px]">
                           {item.title}
                         </p>
-                        <p className="text-white">설명설명설명설명설명</p>
+                        <p className="text-white">{item.medium}</p>
+                        <p className="text-white">{item.period}</p>
+                        <p className="text-white">{item.dimensions}</p>
+                        <p className="text-white">{item.classification}</p>
                       </div>
                     </div>
                   </SwiperSlide>
@@ -137,14 +143,18 @@ export default function ExhibitionHall() {
                 chevronSize="20px"
                 className="btn-prev"
               />
-              <div className="flex flex-col">
+              <div className="flex flex-col items-center w-[310px] overflow-hidden">
                 <p className="text-white font-semibold text-[18px] mb-[4px]">
                   {activeItem?.artistDisplayName || 'Unknown'}
                 </p>
                 <p className="text-white text-[16px]">
-                  {activeItem?.artistBeginDate}-{activeItem?.artistEndDate}
+                  {activeItem?.artistDisplayName ? activeItem.artistRole : ''}
                 </p>
-                <p className="text-white text-[16px]">his hometown</p>
+                <p className="text-white text-[16px]">
+                  {activeItem?.artistDisplayName
+                    ? activeItem.artistDisplayBio
+                    : ''}
+                </p>
               </div>
               <ChevronBtn
                 direction="right"
