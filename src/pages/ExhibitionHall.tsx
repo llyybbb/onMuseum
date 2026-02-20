@@ -10,7 +10,7 @@ import 'swiper/css/effect-coverflow'
 import ChevronBtn from '../components/common/ChevronBtn'
 import { Maximize } from 'lucide-react'
 import { useLocation, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
 type MetItem = {
@@ -45,27 +45,40 @@ export default function ExhibitionHall() {
   const { departmentId } = useParams()
   const location = useLocation()
   const departmentName = location.state?.departmentName
-  const page = 1
+  const PREFETCH_AT = 10
   const size = 20
   const [activeIndex, setActiveIndex] = useState(0)
 
-  const { data, isLoading, error } = useQuery<HallResponse>({
-    queryKey: ['hall', departmentId, page, size],
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<HallResponse>({
+    queryKey: ['hall', departmentId, size],
     enabled: !!departmentId,
-    queryFn: async () => {
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
       const res = await fetch(
-        `/api/hall/${departmentId}?page=${page}&size=${size}`,
+        `/api/hall/${departmentId}?page=${pageParam}&size=${size}`,
       )
       if (!res.ok) throw new Error('서버 요청 실패')
-      return res.json()
+      return (await res.json()) as HallResponse
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.end >= lastPage.meta.total) return undefined
+      return lastPage.meta.page + 1
     },
   })
   if (isLoading) return <p>로딩 중...</p>
   if (error) return <p>에러 발생: {(error as Error).message}</p>
   if (!data) return <p>데이터 없음</p>
 
-  const items = data.items
+  const items = data?.pages.flatMap((p) => p.items) ?? []
   const activeItem = items[activeIndex]
+
   const images = 'https://swiperjs.com/demos/images/nature-1.jpg'
 
   return (
@@ -102,7 +115,17 @@ export default function ExhibitionHall() {
                 navigation={{ nextEl: '.btn-next', prevEl: '.btn-prev' }}
                 modules={[EffectCoverflow, Navigation]}
                 onSlideChange={(swiper) => {
-                  setActiveIndex(swiper.realIndex)
+                   const idx = swiper.realIndex
+                   setActiveIndex(idx)
+
+                   const remaining = items.length - 1 - idx
+                   if (
+                     remaining <= PREFETCH_AT &&
+                     hasNextPage &&
+                     !isFetchingNextPage
+                   ) {
+                     fetchNextPage()
+                   }
                 }}
                 className="swiper absolute left-1/2 -translate-x-1/2"
               >
