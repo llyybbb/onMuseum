@@ -32,6 +32,7 @@ function pick(obj) {
   return {
     objectID: obj.objectID,
     title: obj.title,
+    primaryImage:obj.primaryImage,
     primaryImageSmall: obj.primaryImageSmall,
     artistDisplayName: obj.artistDisplayName,
     artistBeginDate: obj.artistBeginDate,

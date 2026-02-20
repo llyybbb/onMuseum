@@ -9,13 +9,15 @@ import { EffectCoverflow, Navigation } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
 import ChevronBtn from '../components/common/ChevronBtn'
 import { Maximize } from 'lucide-react'
-import { useLocation, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useDepartments } from '../hooks/useDepartments'
 
 type MetItem = {
   objectID: number
   title: string
+  primaryImage: string
   primaryImageSmall: string
   artistDisplayName: string
   artistBeginDate: string
@@ -43,8 +45,20 @@ type HallResponse = {
 
 export default function ExhibitionHall() {
   const { departmentId } = useParams()
-  const location = useLocation()
-  const departmentName = location.state?.departmentName
+  const currentId = Number(departmentId)
+  const { data: deptData } = useDepartments()
+  const departments = deptData?.departments ?? []
+
+  const currentIndex = departments.findIndex(
+    (d) => d.departmentId === currentId,
+  )
+  const prevDept = currentIndex > 0 ? departments[currentIndex - 1] : null
+  const nextDept =
+    currentIndex >= 0 && currentIndex < departments.length - 1
+      ? departments[currentIndex + 1]
+      : null
+  const departmentName = departments[currentIndex]?.displayName ?? ''
+
   const PREFETCH_AT = 10
   const size = 20
   const [activeIndex, setActiveIndex] = useState(0)
@@ -90,11 +104,23 @@ export default function ExhibitionHall() {
         <div className="h-screen w-screen bg-black/50 backdrop-blur-[3px]">
           <div className="h-full w-full flex flex-col items-center justify-center gap-[40px]">
             <div className="glass w-[984px] h-[80px] flex justify-between items-center px-[20px] rounded-[40px]">
-              <ChevronBtn direction="left" btnSize="44px" chevronSize="24px" />
+              <Link to={`/hall/${prevDept?.departmentId}`}>
+                <ChevronBtn
+                  direction="left"
+                  btnSize="44px"
+                  chevronSize="24px"
+                />
+              </Link>
               <div className="w-[700px] h-[50px] text-white text-[20px] flex justify-center items-center search-box">
                 {departmentName}
               </div>
-              <ChevronBtn direction="right" btnSize="44px" chevronSize="24px" />
+              <Link to={`/hall/${nextDept?.departmentId}`}>
+                <ChevronBtn
+                  direction="right"
+                  btnSize="44px"
+                  chevronSize="24px"
+                />
+              </Link>
             </div>
 
             <div className="relative w-[1450px] h-[50%]">
@@ -115,17 +141,17 @@ export default function ExhibitionHall() {
                 navigation={{ nextEl: '.btn-next', prevEl: '.btn-prev' }}
                 modules={[EffectCoverflow, Navigation]}
                 onSlideChange={(swiper) => {
-                   const idx = swiper.realIndex
-                   setActiveIndex(idx)
+                  const idx = swiper.realIndex
+                  setActiveIndex(idx)
 
-                   const remaining = items.length - 1 - idx
-                   if (
-                     remaining <= PREFETCH_AT &&
-                     hasNextPage &&
-                     !isFetchingNextPage
-                   ) {
-                     fetchNextPage()
-                   }
+                  const remaining = items.length - 1 - idx
+                  if (
+                    remaining <= PREFETCH_AT &&
+                    hasNextPage &&
+                    !isFetchingNextPage
+                  ) {
+                    fetchNextPage()
+                  }
                 }}
                 className="swiper absolute left-1/2 -translate-x-1/2"
               >
@@ -171,12 +197,10 @@ export default function ExhibitionHall() {
                   {activeItem?.artistDisplayName || 'Unknown'}
                 </p>
                 <p className="text-white text-[16px]">
-                  {activeItem?.artistDisplayName ? activeItem.artistRole : ''}
+                  {activeItem.artistRole ?? ''}
                 </p>
                 <p className="text-white text-[16px]">
-                  {activeItem?.artistDisplayName
-                    ? activeItem.artistDisplayBio
-                    : ''}
+                  {activeItem.artistDisplayBio ?? ''}
                 </p>
               </div>
               <ChevronBtn
