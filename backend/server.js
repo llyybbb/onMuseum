@@ -17,8 +17,10 @@ const redis = new Redis({
 })
 
 // 캐시 TTL
-const IDS_TTL_SEC = 60 * 60 * 24 * 7 // 7일
-const OBJ_TTL_SEC = 60 * 60 * 24 * 30 // 30일
+const IDS_TTL_SEC = 60 * 60 * 24 * 7 
+const OBJ_TTL_SEC = 60 * 60 * 24 * 30 
+const DEPTS_TTL_SEC = 60 * 60 * 24 * 7
+const departmentsKey = () => `met:departments`
 
 // 요청 제한
 const MAX_SIZE = 30
@@ -35,8 +37,6 @@ function pick(obj) {
     primaryImage: obj.primaryImage,
     primaryImageSmall: obj.primaryImageSmall,
     artistDisplayName: obj.artistDisplayName,
-    artistBeginDate: obj.artistBeginDate,
-    artistEndDate: obj.artistEndDate,
     artistDisplayBio: obj.artistDisplayBio,
     artistRole: obj.artistRole,
     period: obj.period,
@@ -99,6 +99,31 @@ async function fetchAndCacheObject(id) {
   await redis.set(key, JSON.stringify(picked), { ex: OBJ_TTL_SEC })
   return picked
 }
+
+
+
+app.get('/api/departments', async (req, res) => {
+  try {
+    const key = departmentsKey()
+
+    const cached = await redis.get(key)
+    const parsed = safeParse(cached)
+    if (parsed.ok) return res.json(parsed.value)
+
+    if (cached != null) await redis.del(key)
+
+    const r = await fetch(`${MET_BASE}/departments`)
+    if (!r.ok) throw new Error(`Met departments failed: ${r.status}`)
+
+    const json = await r.json()
+    await redis.set(key, JSON.stringify(json), { ex: DEPTS_TTL_SEC })
+
+    return res.json(json)
+  } catch (e) {
+    return res.status(500).json({ message: e?.message ?? 'departments failed' })
+  }
+})
+
 
 /**
  * 페이지 단위 응답

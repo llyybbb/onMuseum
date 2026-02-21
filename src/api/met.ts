@@ -8,9 +8,7 @@ export type DepartmentsResponse = {
 }
 
 export async function fetchDepartments(): Promise<DepartmentsResponse> {
-  const res = await fetch(
-    'https://collectionapi.metmuseum.org/public/collection/v1/departments',
-  )
+  const res = await fetch('/api/departments')
   if (!res.ok) throw new Error('departments fetch failed')
   return res.json()
 }

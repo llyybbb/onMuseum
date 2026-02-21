@@ -17,13 +17,11 @@ import { useDepartments } from '../hooks/useDepartments'
 type MetItem = {
   objectID: number
   title: string
-  primaryImage: string | null
-  primaryImageSmall: string | null
+  primaryImage: string
+  primaryImageSmall: string
   artistDisplayName: string
-  artistBeginDate: string
-  artistEndDate: string
   artistDisplayBio: string
-  artistRole: string | null
+  artistRole: string
   period: string
   dimensions: string
   classification: string
@@ -92,8 +90,6 @@ export default function ExhibitionHall() {
   const items = data?.pages.flatMap((p) => p.items) ?? []
   const activeItem = items[activeIndex]
 
-  const images = 'https://swiperjs.com/demos/images/nature-1.jpg'
-
   return (
     <>
       <div
@@ -157,14 +153,7 @@ export default function ExhibitionHall() {
                 {items.map((item) => (
                   <SwiperSlide key={item.objectID}>
                     <div className="slide-inner relative">
-                      <img
-                        src={
-                          item.primaryImageSmall
-                            ? item.primaryImageSmall
-                            : images
-                        }
-                        loading="lazy"
-                      />
+                      <img src={item.primaryImageSmall} loading="lazy" />
                       <div className="absolute top-8 left-1/2 -translate-1/2 w-[104px] h-[35px] glass rounded-[25px] text-white flex justify-center items-center gap-2 cursor-pointer">
                         <Maximize color="white" size={16} />
                         Expand
@@ -196,10 +185,10 @@ export default function ExhibitionHall() {
                   {activeItem?.artistDisplayName || 'Unknown'}
                 </p>
                 <p className="text-white text-[16px]">
-                  {activeItem?.artistRole || ''}
+                  {activeItem?.artistRole}
                 </p>
                 <p className="text-white text-[16px]">
-                  {activeItem?.artistDisplayBio || ''}
+                  {activeItem?.artistDisplayBio}
                 </p>
               </div>
               <ChevronBtn
