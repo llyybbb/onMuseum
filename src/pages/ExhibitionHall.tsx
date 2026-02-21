@@ -44,7 +44,6 @@ type HallResponse = {
   items: MetItem[]
 }
 
-
 export default function ExhibitionHall() {
   const { departmentId } = useParams()
   const currentId = Number(departmentId)
@@ -59,7 +58,7 @@ export default function ExhibitionHall() {
   const nextDept = departments[(currentIndex + 1) % total]
   const departmentName = departments[currentIndex]?.displayName ?? ''
 
-  const PREFETCH_AT = 5
+  const PREFETCH_AT = 10
   const size = 15
   const [activeIndex, setActiveIndex] = useState(0)
 
@@ -82,8 +81,8 @@ export default function ExhibitionHall() {
       return (await res.json()) as HallResponse
     },
     getNextPageParam: (lastPage) => {
-        if (lastPage.meta.exhausted) return undefined
-        return lastPage.meta.nextCursor
+      if (lastPage.meta.exhausted) return undefined
+      return lastPage.meta.nextCursor
     },
   })
   if (isLoading) return <p>로딩 중...</p>
