@@ -48,19 +48,17 @@ export default function ExhibitionHall() {
   const currentId = Number(departmentId)
   const { data: deptData } = useDepartments()
   const departments = deptData?.departments ?? []
+  const total = departments.length
 
   const currentIndex = departments.findIndex(
     (d) => d.departmentId === currentId,
-  )
-  const prevDept = currentIndex > 0 ? departments[currentIndex - 1] : null
-  const nextDept =
-    currentIndex >= 0 && currentIndex < departments.length - 1
-      ? departments[currentIndex + 1]
-      : null
+  )                           
+const prevDept = departments[(currentIndex - 1 + total) % total]
+const nextDept = departments[(currentIndex + 1) % total]
   const departmentName = departments[currentIndex]?.displayName ?? ''
 
-  const PREFETCH_AT = 10
-  const size = 20
+  const PREFETCH_AT = 5
+  const size = 15
   const [activeIndex, setActiveIndex] = useState(0)
 
   const {
@@ -192,7 +190,7 @@ export default function ExhibitionHall() {
                 chevronSize="20px"
                 className="btn-prev"
               />
-              <div className="flex flex-col items-center w-[310px] overflow-hidden">
+              <div className="flex flex-col items-center w-[250px] overflow-hidden">
                 <p className="text-white font-semibold text-[18px] mb-[4px]">
                   {activeItem?.artistDisplayName || 'Unknown'}
                 </p>
