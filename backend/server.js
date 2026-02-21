@@ -32,16 +32,16 @@ function pick(obj) {
   return {
     objectID: obj.objectID,
     title: obj.title,
-    primaryImage:obj.primaryImage,
+    primaryImage: obj.primaryImage,
     primaryImageSmall: obj.primaryImageSmall,
     artistDisplayName: obj.artistDisplayName,
     artistBeginDate: obj.artistBeginDate,
     artistEndDate: obj.artistEndDate,
     artistDisplayBio: obj.artistDisplayBio,
-    artistRole:obj.artistRole,
+    artistRole: obj.artistRole,
     period: obj.period,
-    dimensions:obj.dimensions,
-    classification:obj.classification,
+    dimensions: obj.dimensions,
+    classification: obj.classification,
     medium: obj.medium,
     department: obj.department,
   }
@@ -93,6 +93,8 @@ async function fetchAndCacheObject(id) {
 
   const obj = await r.json()
   const picked = pick(obj)
+
+  if (!picked.primaryImageSmall) return null
 
   await redis.set(key, JSON.stringify(picked), { ex: OBJ_TTL_SEC })
   return picked

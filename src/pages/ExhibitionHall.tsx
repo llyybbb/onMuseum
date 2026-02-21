@@ -17,13 +17,13 @@ import { useDepartments } from '../hooks/useDepartments'
 type MetItem = {
   objectID: number
   title: string
-  primaryImage: string
-  primaryImageSmall: string
+  primaryImage: string | null
+  primaryImageSmall: string | null
   artistDisplayName: string
   artistBeginDate: string
   artistEndDate: string
   artistDisplayBio: string
-  artistRole: string
+  artistRole: string | null
   period: string
   dimensions: string
   classification: string
@@ -52,9 +52,9 @@ export default function ExhibitionHall() {
 
   const currentIndex = departments.findIndex(
     (d) => d.departmentId === currentId,
-  )                           
-const prevDept = departments[(currentIndex - 1 + total) % total]
-const nextDept = departments[(currentIndex + 1) % total]
+  )
+  const prevDept = departments[(currentIndex - 1 + total) % total]
+  const nextDept = departments[(currentIndex + 1) % total]
   const departmentName = departments[currentIndex]?.displayName ?? ''
 
   const PREFETCH_AT = 5
@@ -195,10 +195,10 @@ const nextDept = departments[(currentIndex + 1) % total]
                   {activeItem?.artistDisplayName || 'Unknown'}
                 </p>
                 <p className="text-white text-[16px]">
-                  {activeItem.artistRole ?? ''}
+                  {activeItem?.artistRole || ''}
                 </p>
                 <p className="text-white text-[16px]">
-                  {activeItem.artistDisplayBio ?? ''}
+                  {activeItem?.artistDisplayBio || ''}
                 </p>
               </div>
               <ChevronBtn
