@@ -11,8 +11,9 @@ import ChevronBtn from '../components/common/ChevronBtn'
 import { Maximize } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useDepartments } from '../hooks/useDepartments'
+import ExpandModal from '../modals/ExpandModal'
 
 type MetItem = {
   objectID: number
@@ -43,6 +44,10 @@ type HallResponse = {
 }
 
 export default function ExhibitionHall() {
+  const [modalOpen, setModalOpen] = useState(false)
+  const modalBackground = useRef<HTMLDivElement>(null)
+  const [expandedImage, setExpandedImage] = useState("") 
+
   const { departmentId } = useParams()
   const currentId = Number(departmentId)
   const { data: deptData } = useDepartments()
@@ -97,7 +102,16 @@ export default function ExhibitionHall() {
         className="h-screen w-screen bg-cover bg-center "
       >
         <div className="h-screen w-screen bg-black/50 backdrop-blur-[3px]">
-          <div className="h-full w-full flex flex-col items-center justify-center gap-[40px]">
+          <div
+            className="h-full w-full flex flex-col items-center justify-center gap-[40px]"
+            ref={modalBackground}
+            onClick={(e) => {
+              if (e.target === modalBackground.current) {
+                setModalOpen(false)
+              }
+            }}
+          >
+            {modalOpen && <ExpandModal src={expandedImage} title="vanGogh"/>}
             <div className="glass w-[984px] h-[80px] flex justify-between items-center px-[20px] rounded-[40px]">
               <Link to={`/hall/${prevDept?.departmentId}`}>
                 <ChevronBtn
@@ -154,7 +168,10 @@ export default function ExhibitionHall() {
                   <SwiperSlide key={item.objectID}>
                     <div className="slide-inner relative">
                       <img src={item.primaryImageSmall} loading="lazy" />
-                      <div className="absolute top-8 left-1/2 -translate-1/2 w-[104px] h-[35px] glass rounded-[25px] text-white flex justify-center items-center gap-2 cursor-pointer">
+                      <div
+                        onClick={() => {setModalOpen(true); setExpandedImage(item.primaryImageSmall)}}
+                        className="absolute top-8 left-1/2 -translate-1/2 w-[104px] h-[35px] glass rounded-[25px] text-white flex justify-center items-center gap-2 cursor-pointer"
+                      >
                         <Maximize color="white" size={16} />
                         Expand
                       </div>
