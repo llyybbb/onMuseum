@@ -34,14 +34,16 @@ type MetItem = {
 type HallResponse = {
   meta: {
     departmentId: number
-    page: number
+    cursor: number
+    nextCursor: number
     size: number
     total: number
-    start: number
-    end: number
+    returned: number
+    exhausted: boolean
   }
   items: MetItem[]
 }
+
 
 export default function ExhibitionHall() {
   const { departmentId } = useParams()
@@ -71,17 +73,17 @@ export default function ExhibitionHall() {
   } = useInfiniteQuery<HallResponse>({
     queryKey: ['hall', departmentId, size],
     enabled: !!departmentId,
-    initialPageParam: 1,
+    initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
       const res = await fetch(
-        `/api/hall/${departmentId}?page=${pageParam}&size=${size}`,
+        `/api/hall/${departmentId}?cursor=${pageParam}&size=${size}`,
       )
       if (!res.ok) throw new Error('서버 요청 실패')
       return (await res.json()) as HallResponse
     },
     getNextPageParam: (lastPage) => {
-      if (lastPage.meta.end >= lastPage.meta.total) return undefined
-      return lastPage.meta.page + 1
+        if (lastPage.meta.exhausted) return undefined
+        return lastPage.meta.nextCursor
     },
   })
   if (isLoading) return <p>로딩 중...</p>

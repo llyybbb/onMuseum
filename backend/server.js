@@ -102,61 +102,55 @@ async function fetchAndCacheObject(id) {
 
 /**
  * 페이지 단위 응답
- * GET /api/hall/:departmentId?page=1&size=20
+ * GET /api/hall/:departmentId?cursor=0&size=15
  */
+
 app.get('/api/hall/:departmentId', async (req, res) => {
   const departmentId = Number(req.params.departmentId)
   if (!Number.isFinite(departmentId)) {
     return res.status(400).json({ message: 'invalid departmentId' })
   }
 
-  const page = Math.max(1, Number(req.query.page ?? 1))
+  const cursor = Math.max(0, Number(req.query.cursor ?? 0))
   const size = Math.min(MAX_SIZE, Math.max(1, Number(req.query.size ?? 20)))
 
   try {
     const ids = await getDepartmentObjectIDs(departmentId)
     const total = ids.length
 
-    const start = (page - 1) * size
-    const end = Math.min(start + size, total)
-    const pageIds = ids.slice(start, end)
+    // size개 채우기 위해 cursor부터 계속 진행
+    let i = cursor
+    const items = []
 
-    // mget도 안전 파싱
-    const keys = pageIds.map((id) => objKey(id))
-    const cachedArr = await redis.mget(keys)
+    // 최대 size*15개까지만 훑기
+    const MAX_SCAN = size * 15
+    let scanned = 0
 
-    const items = new Array(pageIds.length).fill(null)
-    const misses = []
-
-    for (let i = 0; i < pageIds.length; i++) {
-      const v = cachedArr[i]
-      const parsed = safeParse(v)
-
-      if (parsed.ok) {
-        items[i] = parsed.value
-      } else {
-        // 깨진 캐시 제거 후 miss 처리
-        if (v != null) await redis.del(keys[i])
-        misses.push({ idx: i, id: pageIds[i] })
-      }
+    while (i < total && items.length < size && scanned < MAX_SCAN) {
+      const id = ids[i]
+      const obj = await limit(() => fetchAndCacheObject(id))
+      if (obj) items.push(obj)
+      i += 1
+      scanned += 1
     }
 
-    const fetched = await Promise.all(
-      misses.map(({ idx, id }) =>
-        limit(async () => ({ idx, obj: await fetchAndCacheObject(id) })),
-      ),
-    )
-
-    for (const { idx, obj } of fetched) items[idx] = obj
-
     return res.json({
-      meta: { departmentId, page, size, total, start, end },
-      items: items.filter(Boolean),
+      meta: {
+        departmentId,
+        cursor,
+        nextCursor: i,          // 다음 요청 시작점
+        size,
+        total,
+        returned: items.length,
+        exhausted: i >= total,  // 더 이상 없음
+      },
+      items,
     })
   } catch (e) {
     return res.status(500).json({ message: e?.message ?? 'hall fetch failed' })
   }
 })
+
 
 // 테스트
 app.get('/', (req, res) => res.send('서버 정상 작동중 🚀'))
