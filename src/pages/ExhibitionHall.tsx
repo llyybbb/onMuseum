@@ -1,4 +1,4 @@
-import '../styles/glass.css'
+﻿import '../styles/glass.css'
 import '../styles/swiper-custom.css'
 
 import { Swiper, SwiperSlide } from 'swiper/react'
@@ -11,7 +11,7 @@ import ChevronBtn from '../components/common/ChevronBtn'
 import { Maximize } from 'lucide-react'
 import { Link, useParams } from 'react-router-dom'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDepartments } from '../hooks/useDepartments'
 import ExpandModal from '../modals/ExpandModal'
 
@@ -46,7 +46,7 @@ type HallResponse = {
 export default function ExhibitionHall() {
   const [modalOpen, setModalOpen] = useState(false)
   const modalBackground = useRef<HTMLDivElement>(null)
-  const [expandedImage, setExpandedImage] = useState("") 
+  const [expandedImage, setExpandedImage] = useState('')
 
   const { departmentId } = useParams()
   const currentId = Number(departmentId)
@@ -61,8 +61,12 @@ export default function ExhibitionHall() {
   const nextDept = departments[(currentIndex + 1) % total]
   const departmentName = departments[currentIndex]?.displayName ?? ''
 
+  const [isSearching, setIsSearching] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
   const PREFETCH_AT = 10
-  const size = 15
+  const size = 20
   const [activeIndex, setActiveIndex] = useState(0)
 
   const {
@@ -80,7 +84,7 @@ export default function ExhibitionHall() {
       const res = await fetch(
         `/api/hall/${departmentId}?cursor=${pageParam}&size=${size}`,
       )
-      if (!res.ok) throw new Error('서버 요청 실패')
+      if (!res.ok) throw new Error('Error')
       return (await res.json()) as HallResponse
     },
     getNextPageParam: (lastPage) => {
@@ -88,9 +92,29 @@ export default function ExhibitionHall() {
       return lastPage.meta.nextCursor
     },
   })
-  if (isLoading) return <p>로딩 중...</p>
-  if (error) return <p>에러 발생: {(error as Error).message}</p>
-  if (!data) return <p>데이터 없음</p>
+  useEffect(() => {
+    if (!data || !hasNextPage || isFetchingNextPage) return
+    const last = data.pages[data.pages.length - 1]
+    if (last && last.items.length === 0 && !last.meta.exhausted) {
+      fetchNextPage()
+    }
+  }, [data, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  useEffect(() => {
+    if (isSearching) {
+      inputRef.current?.focus()
+    }
+  }, [isSearching])
+
+  useEffect(() => {
+    if (isSearching) {
+      inputRef.current?.focus()
+    }
+  }, [isSearching])
+
+  if (isLoading) return <p>로딩 중..</p>
+  if (error) return <p>error: {(error as Error).message}</p>
+  if (!data) return <p>data 없음</p>
 
   const items = data?.pages.flatMap((p) => p.items) ?? []
   const activeItem = items[activeIndex]
@@ -111,7 +135,7 @@ export default function ExhibitionHall() {
               }
             }}
           >
-            {modalOpen && <ExpandModal src={expandedImage} title="vanGogh"/>}
+            {modalOpen && <ExpandModal src={expandedImage} title="vanGogh" />}
             <div className="glass w-[984px] h-[80px] flex justify-between items-center px-[20px] rounded-[40px]">
               <Link to={`/hall/${prevDept?.departmentId}`}>
                 <ChevronBtn
@@ -120,8 +144,33 @@ export default function ExhibitionHall() {
                   chevronSize="24px"
                 />
               </Link>
-              <div className="w-[700px] h-[50px] text-white text-[20px] flex justify-center items-center search-box">
-                {departmentName}
+              <div
+                className="w-[700px] h-[50px] text-white text-[20px] flex justify-center items-center search-box cursor-text"
+                onClick={() => setIsSearching(true)}
+              >
+                {isSearching ? (
+                  <form
+                    onSubmit={(e) => e.preventDefault()}
+                    className="w-full h-full flex items-center justify-center"
+                  >
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          setIsSearching(false)
+                        }
+                      }}
+                      onBlur={() => setIsSearching(false)}
+                      placeholder="검색어를 입력하세요"
+                      className="w-full h-full bg-transparent outline-none text-center placeholder:text-white/60"
+                    />
+                  </form>
+                ) : (
+                  <span>{departmentName}</span>
+                )}
               </div>
               <Link to={`/hall/${nextDept?.departmentId}`}>
                 <ChevronBtn
@@ -169,7 +218,10 @@ export default function ExhibitionHall() {
                     <div className="slide-inner relative">
                       <img src={item.primaryImageSmall} loading="lazy" />
                       <div
-                        onClick={() => {setModalOpen(true); setExpandedImage(item.primaryImageSmall)}}
+                        onClick={() => {
+                          setModalOpen(true)
+                          setExpandedImage(item.primaryImageSmall)
+                        }}
                         className="absolute top-8 left-1/2 -translate-1/2 w-[104px] h-[35px] glass rounded-[25px] text-white flex justify-center items-center gap-2 cursor-pointer"
                       >
                         <Maximize color="white" size={16} />

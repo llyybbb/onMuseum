@@ -7,7 +7,7 @@ import pLimit from 'p-limit'
 const app = express()
 app.use(cors())
 
-const PORT = process.env.PORT || 5173
+const PORT = process.env.PORT || 5174
 const MET_BASE = 'https://collectionapi.metmuseum.org/public/collection/v1'
 
 // Upstash Redis (REST)
@@ -26,6 +26,7 @@ const departmentsKey = () => `met:departments`
 const MAX_SIZE = 30
 const CONCURRENCY = 8
 const limit = pLimit(CONCURRENCY)
+const NO_IMAGE_SENTINEL = '__NO_IMAGE__'
 
 const deptIdsKey = (deptId) => `met:dept:ids:${deptId}`
 const objKey = (id) => `met:obj:${id}`
@@ -83,7 +84,10 @@ async function fetchAndCacheObject(id) {
 
   const cached = await redis.get(key)
   const parsed = safeParse(cached)
-  if (parsed.ok) return parsed.value
+  if (parsed.ok) {
+    if (parsed.value === NO_IMAGE_SENTINEL) return null
+    return parsed.value
+  }
 
   // 깨진 캐시 제거
   if (cached != null) await redis.del(key)
@@ -94,7 +98,10 @@ async function fetchAndCacheObject(id) {
   const obj = await r.json()
   const picked = pick(obj)
 
-  if (!picked.primaryImageSmall) return null
+  if (!picked.primaryImageSmall) {
+    await redis.set(key, JSON.stringify(NO_IMAGE_SENTINEL), { ex: OBJ_TTL_SEC })
+    return null
+  }
 
   await redis.set(key, JSON.stringify(picked), { ex: OBJ_TTL_SEC })
   return picked
@@ -148,15 +155,26 @@ app.get('/api/hall/:departmentId', async (req, res) => {
     const items = []
 
     // 최대 size*15개까지만 훑기
-    const MAX_SCAN = size * 15
+    const MAX_SCAN = Math.max(size * 50, 1000)
+    const BATCH_SIZE = CONCURRENCY * 2
     let scanned = 0
 
     while (i < total && items.length < size && scanned < MAX_SCAN) {
-      const id = ids[i]
-      const obj = await limit(() => fetchAndCacheObject(id))
-      if (obj) items.push(obj)
-      i += 1
-      scanned += 1
+      const from = i
+      const to = Math.min(i + BATCH_SIZE, total)
+      const batchIds = ids.slice(from, to)
+
+      const batch = await Promise.all(
+        batchIds.map((id) => limit(() => fetchAndCacheObject(id))),
+      )
+
+      for (const obj of batch) {
+        if (obj) items.push(obj)
+        if (items.length >= size) break
+      }
+
+      i = to
+      scanned += batchIds.length
     }
 
     return res.json({
