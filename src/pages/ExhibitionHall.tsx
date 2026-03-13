@@ -164,7 +164,9 @@ export default function ExhibitionHall() {
             }}
           >
             {modalOpen && <ExpandModal src={expandedImage} title="vanGogh" />}
-            <div className="glass w-[984px] h-[80px] flex justify-between items-center px-[20px] rounded-[40px]">
+            <div
+              className={`glass w-[984px] h-[80px] flex  ${isSearchMode ? 'justify-center' : 'justify-between'} items-center px-[20px] rounded-[40px]`}
+            >
               {!isSearchMode && (
                 <Link to={`/hall/${prevDept?.departmentId}`}>
                   <ChevronBtn
