@@ -4,9 +4,10 @@ import ExhibitionHall from '../pages/ExhibitionHall';
 
 export default function routes () {
   return (
-   <Routes>
-    <Route path='/' element={<Landing />} />
-    <Route path='/hall/:departmentId' element={<ExhibitionHall />} />
-   </Routes>
-  );
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/hall/search" element={<ExhibitionHall />} />
+      <Route path="/hall/:departmentId" element={<ExhibitionHall />} />
+    </Routes>
+  )
 }

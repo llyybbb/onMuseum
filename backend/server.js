@@ -17,10 +17,12 @@ const redis = new Redis({
 })
 
 // 캐시 TTL
-const IDS_TTL_SEC = 60 * 60 * 24 * 7 
-const OBJ_TTL_SEC = 60 * 60 * 24 * 30 
+const IDS_TTL_SEC = 60 * 60 * 24 * 7
+const OBJ_TTL_SEC = 60 * 60 * 24 * 30
 const DEPTS_TTL_SEC = 60 * 60 * 24 * 7
 const departmentsKey = () => `met:departments`
+const searchIdsKey = (paramsString) => `met:search:ids:${paramsString}`
+
 
 // 요청 제한
 const MAX_SIZE = 30
@@ -79,6 +81,35 @@ async function getDepartmentObjectIDs(deptId) {
   return ids
 }
 
+
+async function getSearchObjectIDs(q) {
+  const keyword = String(q ?? '').trim()
+  if (!keyword) return []
+
+  const params = new URLSearchParams()
+  params.set('q', keyword)
+  params.set('hasImages', 'true')
+
+  const key = searchIdsKey(params.toString())
+
+  const cached = await redis.get(key)
+  const parsed = safeParse(cached)
+  if (parsed.ok) return parsed.value
+
+  if (cached != null) await redis.del(key)
+
+  const r = await fetch(`${MET_BASE}/search?${params.toString()}`)
+  if (!r.ok) throw new Error(`Met search failed: ${r.status}`)
+
+  const json = await r.json()
+  const ids = Array.isArray(json.objectIDs) ? json.objectIDs : []
+
+  await redis.set(key, JSON.stringify(ids), { ex: IDS_TTL_SEC })
+  return ids
+}
+
+
+
 async function fetchAndCacheObject(id) {
   const key = objKey(id)
 
@@ -107,8 +138,6 @@ async function fetchAndCacheObject(id) {
   return picked
 }
 
-
-
 app.get('/api/departments', async (req, res) => {
   try {
     const key = departmentsKey()
@@ -131,11 +160,64 @@ app.get('/api/departments', async (req, res) => {
   }
 })
 
+app.get('/api/hall/search', async (req, res) => {
+  const q = String(req.query.q ?? '').trim()
+  if (!q) {
+    return res.status(400).json({ message: 'q is required' })
+  }
 
-/**
- * 페이지 단위 응답
- * GET /api/hall/:departmentId?cursor=0&size=15
- */
+  const cursor = Math.max(0, Number(req.query.cursor ?? 0))
+  const size = Math.min(MAX_SIZE, Math.max(1, Number(req.query.size ?? 20)))
+
+  try {
+    const ids = await getSearchObjectIDs(q)
+    const total = ids.length
+
+    let i = cursor
+    const items = []
+
+    const MAX_SCAN = Math.max(size * 50, 1000)
+    const BATCH_SIZE = CONCURRENCY * 2
+    let scanned = 0
+
+    while (i < total && items.length < size && scanned < MAX_SCAN) {
+      const from = i
+      const to = Math.min(i + BATCH_SIZE, total)
+      const batchIds = ids.slice(from, to)
+
+      const batch = await Promise.all(
+        batchIds.map((id) => limit(() => fetchAndCacheObject(id))),
+      )
+
+      for (const obj of batch) {
+        if (obj) items.push(obj)
+        if (items.length >= size) break
+      }
+
+      i = to
+      scanned += batchIds.length
+    }
+
+    return res.json({
+      meta: {
+        q,
+        cursor,
+        nextCursor: i,
+        size,
+        total,
+        returned: items.length,
+        exhausted: i >= total,
+      },
+      items,
+    })
+  } catch (e) {
+    return res
+      .status(500)
+      .json({ message: e?.message ?? 'search fetch failed' })
+  }
+})
+
+
 
 app.get('/api/hall/:departmentId', async (req, res) => {
   const departmentId = Number(req.params.departmentId)
@@ -181,11 +263,11 @@ app.get('/api/hall/:departmentId', async (req, res) => {
       meta: {
         departmentId,
         cursor,
-        nextCursor: i,          // 다음 요청 시작점
+        nextCursor: i, // 다음 요청 시작점
         size,
         total,
         returned: items.length,
-        exhausted: i >= total,  // 더 이상 없음
+        exhausted: i >= total, // 더 이상 없음
       },
       items,
     })
@@ -193,6 +275,7 @@ app.get('/api/hall/:departmentId', async (req, res) => {
     return res.status(500).json({ message: e?.message ?? 'hall fetch failed' })
   }
 })
+
 
 
 // 테스트

@@ -9,7 +9,13 @@ import { EffectCoverflow, Navigation } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
 import ChevronBtn from '../components/common/ChevronBtn'
 import { Maximize } from 'lucide-react'
-import { Link, useParams } from 'react-router-dom'
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from 'react-router-dom'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { useDepartments } from '../hooks/useDepartments'
@@ -44,11 +50,19 @@ type HallResponse = {
 }
 
 export default function ExhibitionHall() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
   const [modalOpen, setModalOpen] = useState(false)
   const modalBackground = useRef<HTMLDivElement>(null)
   const [expandedImage, setExpandedImage] = useState('')
 
   const { departmentId } = useParams()
+  const [searchParams] = useSearchParams()
+
+  const keyword = searchParams.get('q') ?? ''
+  const isSearchMode = location.pathname === '/hall/search'
+
   const currentId = Number(departmentId)
   const { data: deptData } = useDepartments()
   const departments = deptData?.departments ?? []
@@ -65,6 +79,8 @@ export default function ExhibitionHall() {
   const [searchTerm, setSearchTerm] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
+  const headerTitle = isSearchMode ? keyword || 'Search' : departmentName
+
   const PREFETCH_AT = 10
   const size = 20
   const [activeIndex, setActiveIndex] = useState(0)
@@ -77,13 +93,30 @@ export default function ExhibitionHall() {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery<HallResponse>({
-    queryKey: ['hall', departmentId, size],
-    enabled: !!departmentId,
+    queryKey: isSearchMode
+      ? ['search', keyword, size]
+      : ['hall', departmentId, size],
+    enabled: isSearchMode ? !!keyword : !!departmentId,
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
-      const res = await fetch(
-        `/api/hall/${departmentId}?cursor=${pageParam}&size=${size}`,
-      )
+      const params = new URLSearchParams({
+        q: keyword,
+        cursor: String(pageParam),
+        size: String(size),
+      })
+
+      let url = ''
+
+      if (isSearchMode) {
+        params.set('q', keyword)
+        url = `/api/hall/search?${params.toString()}`
+      } else {
+        url = `/api/hall/${departmentId}?${params.toString()}`
+      }
+
+      console.log('FETCH URL:', url)
+
+      const res = await fetch(url)
       if (!res.ok) throw new Error('Error')
       return (await res.json()) as HallResponse
     },
@@ -92,6 +125,7 @@ export default function ExhibitionHall() {
       return lastPage.meta.nextCursor
     },
   })
+
   useEffect(() => {
     if (!data || !hasNextPage || isFetchingNextPage) return
     const last = data.pages[data.pages.length - 1]
@@ -99,12 +133,6 @@ export default function ExhibitionHall() {
       fetchNextPage()
     }
   }, [data, hasNextPage, isFetchingNextPage, fetchNextPage])
-
-  useEffect(() => {
-    if (isSearching) {
-      inputRef.current?.focus()
-    }
-  }, [isSearching])
 
   useEffect(() => {
     if (isSearching) {
@@ -137,13 +165,15 @@ export default function ExhibitionHall() {
           >
             {modalOpen && <ExpandModal src={expandedImage} title="vanGogh" />}
             <div className="glass w-[984px] h-[80px] flex justify-between items-center px-[20px] rounded-[40px]">
-              <Link to={`/hall/${prevDept?.departmentId}`}>
-                <ChevronBtn
-                  direction="left"
-                  btnSize="44px"
-                  chevronSize="24px"
-                />
-              </Link>
+              {!isSearchMode && (
+                <Link to={`/hall/${prevDept?.departmentId}`}>
+                  <ChevronBtn
+                    direction="left"
+                    btnSize="44px"
+                    chevronSize="24px"
+                  />
+                </Link>
+              )}
               <div
                 className="w-[700px] h-[50px] text-white text-[20px] flex justify-center items-center search-box cursor-text"
                 onClick={() => setIsSearching(true)}
@@ -161,6 +191,10 @@ export default function ExhibitionHall() {
                       onKeyDown={(e) => {
                         if (e.key === 'Escape') {
                           setIsSearching(false)
+                        } else if (e.key === 'Enter') {
+                          navigate(
+                            `/hall/search?q=${encodeURIComponent(searchTerm)}`,
+                          )
                         }
                       }}
                       onBlur={() => setIsSearching(false)}
@@ -169,16 +203,18 @@ export default function ExhibitionHall() {
                     />
                   </form>
                 ) : (
-                  <span>{departmentName}</span>
+                  <span>{headerTitle}</span>
                 )}
               </div>
-              <Link to={`/hall/${nextDept?.departmentId}`}>
-                <ChevronBtn
-                  direction="right"
-                  btnSize="44px"
-                  chevronSize="24px"
-                />
-              </Link>
+              {!isSearchMode && (
+                <Link to={`/hall/${nextDept?.departmentId}`}>
+                  <ChevronBtn
+                    direction="right"
+                    btnSize="44px"
+                    chevronSize="24px"
+                  />
+                </Link>
+              )}
             </div>
 
             <div className="relative w-[1450px] h-[50%]">
