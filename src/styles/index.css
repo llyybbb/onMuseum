@@ -1,1 +1,7 @@
 @import './tailwind.css';
+
+@font-face {
+  font-family: "philosopher";
+  font-weight: normal;
+  src: url("../font/Philosopher-Regular.ttf") format("truetype");
+}
