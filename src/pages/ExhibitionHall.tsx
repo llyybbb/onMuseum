@@ -114,8 +114,6 @@ export default function ExhibitionHall() {
         url = `/api/hall/${departmentId}?${params.toString()}`
       }
 
-      console.log('FETCH URL:', url)
-
       const res = await fetch(url)
       if (!res.ok) throw new Error('Error')
       return (await res.json()) as HallResponse

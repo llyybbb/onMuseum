@@ -1,16 +1,18 @@
 import { Menu } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useDepartments } from '../../hooks/useDepartments'
 
 export default function Header() {
-  const [MenuOpen, SetMenuOpen] = useState(false)
+  const [MenuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
+      
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        SetMenuOpen(false)
+        setMenuOpen(false)
       }
     }
 
@@ -37,38 +39,77 @@ export default function Header() {
             </div>
           </Link>
 
-          <Menu
-            color="white"
-            size={25}
-            className="cursor-pointer"
-            onClick={() => SetMenuOpen(!MenuOpen)}
-          />
-        </div>
-        {MenuOpen && (
-          <div
-            ref={menuRef}
-            style={{
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-            }}
-            className="w-[300px] h-[350px] rounded-3xl absolute top-[55px] right-[150px] overflow-y-scroll"
-          >
-            <ul className="glass rounded-3xl divide-y divide-white/20 space-y-4 text-white text-[18px] p-[20px]">
-              {departments.map((item) => {
-                return (
-                  <li
-                    className="py-[5px] px-[20px] glass rounded-xl"
-                    onClick={() => SetMenuOpen(!MenuOpen)}
-                  >
-                    <Link to={`/hall/${item.departmentId}`}>
-                      {item.displayName}
-                    </Link>
-                  </li>
-                )
-              })}
-            </ul>
+          <div ref={menuRef} className="relative">
+            <motion.div
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.18 }}
+              className="flex justify-center items-center p-2 rounded-full glass cursor-pointer"
+              onClick={() => setMenuOpen((prev) => !prev)}
+            >
+              <Menu color="white" size={25} />
+            </motion.div>
+
+            <AnimatePresence>
+              {MenuOpen && (
+                <motion.div
+                  initial={{
+                    opacity: 0,
+                    y: -12,
+                    scale: 0.96,
+                    filter: 'blur(8px)',
+                  }}
+                  animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                  exit={{
+                    opacity: 0,
+                    y: -10,
+                    scale: 0.97,
+                    filter: 'blur(6px)',
+                  }}
+                  transition={{
+                    type: 'spring',
+                    stiffness: 260,
+                    damping: 22,
+                    mass: 0.9,
+                  }}
+                  style={{
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none',
+                  }}
+                  className="w-[300px] h-[350px] rounded-3xl absolute top-[48px] right-0 overflow-y-scroll"
+                >
+                  <ul className="glass rounded-3xl space-y-4 text-white text-[18px] p-[20px] shadow-2xl">
+                    <li className="text-white text-[23px] font-[philosopher]">
+                      Category
+                    </li>
+
+                    {departments.map((item, index) => (
+                      <motion.li
+                        key={item.departmentId}
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{
+                          delay: 0.04 * index,
+                          duration: 0.2,
+                        }}
+                        className="py-[5px] px-[20px] glass rounded-xl transition-transform duration-200 hover:scale-[1.03]"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Link
+                          to={`/hall/${item.departmentId}`}
+                          className="block w-full"
+                        >
+                          {item.displayName}
+                        </Link>
+                      </motion.li>
+                    ))}
+                  </ul>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
-        )}
+        </div>
       </header>
     </>
   )
