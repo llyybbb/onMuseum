@@ -5,3 +5,10 @@
   font-weight: normal;
   src: url("../font/Philosopher-Regular.ttf") format("truetype");
 }
+
+.flair {
+  position: fixed;
+  opacity: 0;
+  width: 80px;
+  pointer-events: none;
+}
