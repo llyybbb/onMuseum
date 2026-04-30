@@ -23,6 +23,7 @@ export default function Landing() {
   const canvasWrapperRef = useRef<HTMLDivElement | null>(null)
   const titleTextRef = useRef<HTMLHeadingElement | null>(null)
   const subtitleTextRef = useRef<HTMLParagraphElement | null>(null)
+  const deptRefs = useRef<HTMLAnchorElement[]>([])
 
   useEffect(() => {
     if (!sectionRef.current || !canvasWrapperRef.current) return
@@ -371,8 +372,42 @@ export default function Landing() {
     }
   }, [])
 
- 
-    const departments = data?.departments ?? []
+  const departments = data?.departments ?? []
+  deptRefs.current = []
+
+  useEffect(() => {
+    if (!data?.departments?.length) return
+
+    const deptElements = deptRefs.current.filter(Boolean)
+
+    if (deptElements.length === 0) return
+
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        deptElements,
+        {
+          y: 40,
+          opacity: 0,
+        },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.3,
+          ease: 'power3.out',
+          stagger: 0.1,
+          scrollTrigger: {
+            trigger: deptElements[0].parentElement,
+            start: 'top 80%',
+            once: true,
+          },
+        },
+      )
+
+      ScrollTrigger.refresh()
+    })
+
+    return () => ctx.revert()
+  }, [data])
 
   return (
     <div className="bg-black">
@@ -422,23 +457,23 @@ export default function Landing() {
       <section className="h-screen flex gap-[50px] items-center justify-center text-white bg-zinc-900">
         <h2 className="text-4xl font-semibold font-[philosopher]">Category</h2>
         {isLoading && <p className="text-white/60">로딩 중...</p>}
-
         {error && (
           <p className="text-red-400">에러 발생: {(error as Error).message}</p>
         )}
-
         {!isLoading && !error && departments.length === 0 && (
           <p className="text-white/60">데이터 없음</p>
         )}
-
         {!isLoading && !error && departments.length > 0 && (
           <div className="flex flex-col items-center gap-3">
-            {departments.map((dept) => (
+            {departments.map((dept, i) => (
               <Link
                 to={`/hall/${dept.departmentId}`}
                 state={{ departmentName: dept.displayName }}
                 key={dept.departmentId}
-                className="text-white/80 hover:text-white transition-colors text-xl"
+                ref={(el) => {
+                  if (el) deptRefs.current[i] = el
+                }}
+                className="text-white/80 hover:text-white transition-colors text-xl opacity-0 translate-y-10"
               >
                 {dept.displayName}
               </Link>
