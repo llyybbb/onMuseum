@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { useDepartments } from '../hooks/useDepartments'
+import { Link } from 'react-router-dom'
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -15,7 +17,8 @@ type SlideItem = {
   baseZ: number
 }
 
-export default function Ex() {
+export default function Landing() {
+  const { data, isLoading, error } = useDepartments()
   const sectionRef = useRef<HTMLDivElement | null>(null)
   const canvasWrapperRef = useRef<HTMLDivElement | null>(null)
   const titleTextRef = useRef<HTMLHeadingElement | null>(null)
@@ -368,6 +371,9 @@ export default function Ex() {
     }
   }, [])
 
+ 
+    const departments = data?.departments ?? []
+
   return (
     <div className="bg-black">
       <section
@@ -413,8 +419,32 @@ export default function Ex() {
         </div>
       </section>
 
-      <section className="h-screen flex items-center justify-center text-white bg-zinc-900">
-        <h2 className="text-4xl font-semibold font-[philosopher]">MuseOn</h2>
+      <section className="h-screen flex gap-[50px] items-center justify-center text-white bg-zinc-900">
+        <h2 className="text-4xl font-semibold font-[philosopher]">Category</h2>
+        {isLoading && <p className="text-white/60">로딩 중...</p>}
+
+        {error && (
+          <p className="text-red-400">에러 발생: {(error as Error).message}</p>
+        )}
+
+        {!isLoading && !error && departments.length === 0 && (
+          <p className="text-white/60">데이터 없음</p>
+        )}
+
+        {!isLoading && !error && departments.length > 0 && (
+          <div className="flex flex-col items-center gap-3">
+            {departments.map((dept) => (
+              <Link
+                to={`/hall/${dept.departmentId}`}
+                state={{ departmentName: dept.displayName }}
+                key={dept.departmentId}
+                className="text-white/80 hover:text-white transition-colors text-xl"
+              >
+                {dept.displayName}
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   )
