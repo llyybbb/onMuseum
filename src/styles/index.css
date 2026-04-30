@@ -6,9 +6,16 @@
   src: url("../font/Philosopher-Regular.ttf") format("truetype");
 }
 
+html,
+body,
+#root {
+  overflow-x: clip;
+}
+
 .flair {
   position: fixed;
   opacity: 0;
   width: 80px;
+  height: 100px;
   pointer-events: none;
 }

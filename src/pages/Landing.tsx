@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom'
 import { useDepartments } from '../hooks/useDepartments'
 import gsap from 'gsap'
 import { useEffect, useRef } from 'react'
+import { Swiper, SwiperSlide } from 'swiper/react'
+import { EffectCoverflow } from 'swiper/modules'
 
 type MousePos = {
   x: number
@@ -35,13 +37,7 @@ export default function Landing() {
         scale: 0,
         ease: 'elastic.out(1,0.3)',
       })
-        .to(
-          shape,
-          {
-           
-          },
-          '<',
-        )
+        .to(shape, {}, '<')
         .to(
           shape,
           {
@@ -109,12 +105,12 @@ export default function Landing() {
         y: e.clientY,
       }
     }
-
-    window.addEventListener('mousemove', handleMouseMove)
+    const container = containerRef.current
+    container.addEventListener('mousemove', handleMouseMove)
     gsap.ticker.add(imageTrail)
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
+      container.removeEventListener('mousemove', handleMouseMove)
       gsap.ticker.remove(imageTrail)
       gsap.killTweensOf(flair)
     }
@@ -127,38 +123,67 @@ export default function Landing() {
   return (
     <>
       <div
-        className="w-screen h-screen bg-cover bg-center"
+        className="w-screen h-[200vh] bg-cover bg-center overflow-x-hidden"
         style={{ backgroundImage: `url('/lendingBg.png')` }}
       >
-        <div
-          ref={containerRef}
-          className="w-full h-full flex flex-col justify-center items-center"
-        >
-          <img className="flair" src="/highlight_1.jpg" alt=""></img>
-          <img className="flair" src="/highlight_2.jpg" alt=""></img>
-          <img className="flair" src="/highlight_3.jpg" alt=""></img>
-          <img className="flair" src="/highlight_4.jpg" alt=""></img>
-          <img className="flair" src="/highlight_5.jpg" alt=""></img>
-          <img className="flair" src="/highlight_6.jpg" alt=""></img>
-          <img className="flair" src="/highlight_7.jpg" alt=""></img>
-          <img className="flair" src="/highlight_8.jpg" alt=""></img>
-          <img src="/logo_1.png" className="h-[500px] z-20"></img>
+        <div className="w-full h-full flex flex-col items-center">
+          <div
+            ref={containerRef}
+            className="w-full h-[100vh] flex justify-center items-center"
+          >
+            <img className="flair" src="/highlight_1.jpg" alt=""></img>
+            <img className="flair" src="/highlight_2.jpg" alt=""></img>
+            <img className="flair" src="/highlight_3.jpg" alt=""></img>
+            <img className="flair" src="/highlight_4.jpg" alt=""></img>
+            <img className="flair" src="/highlight_5.jpg" alt=""></img>
+            <img className="flair" src="/highlight_6.jpg" alt=""></img>
+            <img className="flair" src="/highlight_7.jpg" alt=""></img>
+            <img className="flair" src="/highlight_8.jpg" alt=""></img>
+
             <h1 className="text-white text-[150px] text-center font-[philosopher] z-20">
               MuseOn<br></br>Art Gallery
             </h1>
+          </div>
 
-          <span>Categories</span>
-          <div className="flex gap-5">
-            {departments.map((dept) => (
-              <Link
-                to={`/hall/${dept.departmentId}`}
-                state={{ departmentName: dept.displayName }}
-              >
-                <p key={dept.departmentId} className="cursor-pointer">
-                  {dept.displayName}
-                </p>
-              </Link>
-            ))}
+          <div className="w-full flex flex-col justify-center items-center gap-[50px]">
+            <span className="text-white font-extrabold text-[50px] font-[philosopher]">
+              Categories
+            </span>
+
+            <Swiper
+              loop
+              effect="coverflow"
+              grabCursor
+              centeredSlides
+              slidesPerView={5}
+              spaceBetween={50}
+              coverflowEffect={{
+                rotate: 15,
+                stretch: 0,
+                depth: 300,
+                modifier: 1,
+                slideShadows: false,
+                scale: 0.9,
+              }}
+              navigation={{ nextEl: '.btn-next', prevEl: '.btn-prev' }}
+              modules={[EffectCoverflow]}
+              className="swiper w-[80%] overflow-hidden"
+            >
+              {departments.map((dept) => (
+                <Link
+                  to={`/hall/${dept.departmentId}`}
+                  state={{ departmentName: dept.displayName }}
+                  key={dept.departmentId}
+                >
+                  <SwiperSlide className="w-[200px] h-[150px]">
+                    <img src="/highlight_1.jpg"></img>
+                    <p className="cursor-pointer text-white">
+                      {dept.displayName}
+                    </p>
+                  </SwiperSlide>
+                </Link>
+              ))}
+            </Swiper>
           </div>
         </div>
       </div>

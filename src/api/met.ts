@@ -9,6 +9,12 @@ export type DepartmentsResponse = {
 
 export async function fetchDepartments(): Promise<DepartmentsResponse> {
   const res = await fetch('/api/departments')
-  if (!res.ok) throw new Error('departments fetch failed')
+
+  if (!res.ok) {
+    const text = await res.text()
+    console.error('departments fetch failed:', res.status, text)
+    throw new Error(`departments fetch failed: ${res.status}`)
+  }
+
   return res.json()
 }
