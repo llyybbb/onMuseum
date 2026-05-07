@@ -7,7 +7,10 @@ import pLimit from 'p-limit'
 const app = express()
 app.use(cors())
 
-const PORT = process.env.PORT || 5174
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
+})
 const MET_BASE = 'https://collectionapi.metmuseum.org/public/collection/v1'
 
 // Upstash Redis (REST)
@@ -22,7 +25,6 @@ const OBJ_TTL_SEC = 60 * 60 * 24 * 30
 const DEPTS_TTL_SEC = 60 * 60 * 24 * 7
 const departmentsKey = () => `met:departments`
 const searchIdsKey = (paramsString) => `met:search:ids:${paramsString}`
-
 
 // 요청 제한
 const MAX_SIZE = 30
@@ -81,7 +83,6 @@ async function getDepartmentObjectIDs(deptId) {
   return ids
 }
 
-
 async function getSearchObjectIDs(q) {
   const keyword = String(q ?? '').trim()
   if (!keyword) return []
@@ -107,8 +108,6 @@ async function getSearchObjectIDs(q) {
   await redis.set(key, JSON.stringify(ids), { ex: IDS_TTL_SEC })
   return ids
 }
-
-
 
 async function fetchAndCacheObject(id) {
   const key = objKey(id)
@@ -217,8 +216,6 @@ app.get('/api/hall/search', async (req, res) => {
   }
 })
 
-
-
 app.get('/api/hall/:departmentId', async (req, res) => {
   const departmentId = Number(req.params.departmentId)
   if (!Number.isFinite(departmentId)) {
@@ -275,8 +272,6 @@ app.get('/api/hall/:departmentId', async (req, res) => {
     return res.status(500).json({ message: e?.message ?? 'hall fetch failed' })
   }
 })
-
-
 
 // 테스트
 app.get('/', (req, res) => res.send('서버 정상 작동중 🚀'))
