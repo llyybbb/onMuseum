@@ -5,7 +5,30 @@ import { Redis } from '@upstash/redis'
 import pLimit from 'p-limit'
 
 const app = express()
-app.use(cors())
+
+const allowedOrigins = new Set(
+  [
+    process.env.FRONTEND_ORIGIN ?? '',
+    ...(process.env.CORS_ORIGINS ?? '').split(','),
+  ]
+    .map((origin) => origin.trim())
+    .filter(Boolean),
+)
+
+if (process.env.NODE_ENV !== 'production') {
+  allowedOrigins.add('http://localhost:5173')
+  allowedOrigins.add('http://127.0.0.1:5173')
+}
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.has(origin)) return callback(null, true)
+      return callback(new Error('Not allowed by CORS'))
+    },
+  }),
+)
 
 const PORT = process.env.PORT || 3000
 const MET_BASE = 'https://collectionapi.metmuseum.org/public/collection/v1'
