@@ -8,9 +8,6 @@ const app = express()
 app.use(cors())
 
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
-})
 const MET_BASE = 'https://collectionapi.metmuseum.org/public/collection/v1'
 
 // Upstash Redis (REST)
@@ -277,9 +274,11 @@ app.get('/api/hall/:departmentId', async (req, res) => {
 app.get('/', (req, res) => res.send('서버 정상 작동중 🚀'))
 
 // 개발용: 필요할 때만 켜고, 배포 전 삭제
-app.get('/api/debug/flush', async (req, res) => {
-  await redis.flushdb()
-  res.json({ ok: true })
-})
+if (process.env.NODE_ENV !== 'production') {
+  app.get('/api/debug/flush', async (req, res) => {
+    await redis.flushdb()
+    res.json({ ok: true })
+  })
+}
 
 app.listen(PORT, () => console.log(`backend on http://localhost:${PORT}`))

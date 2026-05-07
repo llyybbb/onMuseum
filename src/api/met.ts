@@ -1,3 +1,5 @@
+import { withApiBase } from './baseUrl'
+
 export type Department = {
   departmentId: number
   displayName: string
@@ -8,7 +10,7 @@ export type DepartmentsResponse = {
 }
 
 export async function fetchDepartments(): Promise<DepartmentsResponse> {
-  const res = await fetch('/api/departments')
+  const res = await fetch(withApiBase('/api/departments'))
 
   if (!res.ok) {
     const text = await res.text()

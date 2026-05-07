@@ -1,5 +1,12 @@
 # React + TypeScript + Vite
 
+## API Environment Variable
+
+Set `VITE_API_BASE_URL` when frontend and backend are deployed on different domains.
+
+- Example (Render backend): `VITE_API_BASE_URL=https://your-backend.onrender.com`
+- If frontend/backend are on the same domain, you can leave it empty.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

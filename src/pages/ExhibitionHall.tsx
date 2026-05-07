@@ -20,6 +20,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { useDepartments } from '../hooks/useDepartments'
 import ExpandModal from '../modals/ExpandModal'
+import { withApiBase } from '../api/baseUrl'
 
 type MetItem = {
   objectID: number
@@ -114,7 +115,7 @@ export default function ExhibitionHall() {
         url = `/api/hall/${departmentId}?${params.toString()}`
       }
 
-      const res = await fetch(url)
+      const res = await fetch(withApiBase(url))
       if (!res.ok) throw new Error('Error')
       return (await res.json()) as HallResponse
     },
