@@ -8,7 +8,6 @@ export default function routes() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Landing />} />
-
         <Route path="/hall/search" element={<ExhibitionHall />} />
         <Route path="/hall/:departmentId" element={<ExhibitionHall />} />
       </Route>

@@ -57,6 +57,12 @@ export default function ExhibitionHall() {
   const [modalOpen, setModalOpen] = useState(false)
   const modalBackground = useRef<HTMLDivElement>(null)
   const [expandedImage, setExpandedImage] = useState('')
+  const [title,setTitle]=useState('')
+  const [artist,setArtist]=useState('')
+  const[period,setPeriod]=useState('')
+  const [dimensions,setDimensions]=useState('')
+  const [classification, setClassification]=useState('')
+  const [medium,setMedium]=useState('')
 
   const { departmentId } = useParams()
   const [searchParams] = useSearchParams()
@@ -162,7 +168,19 @@ export default function ExhibitionHall() {
               }
             }}
           >
-            {modalOpen && <ExpandModal src={expandedImage} title="vanGogh" />}
+            {modalOpen && (
+              <ExpandModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                src={expandedImage}
+                title={title}
+                artist={artist}
+                period={period}
+                dimensions={dimensions}
+                classification={classification}
+                medium={medium}
+              />
+            )}
             <div
               className={`glass w-[984px] h-[80px] flex  ${isSearchMode ? 'justify-center' : 'justify-between'} items-center px-[20px] rounded-[40px]`}
             >
@@ -258,6 +276,12 @@ export default function ExhibitionHall() {
                         onClick={() => {
                           setModalOpen(true)
                           setExpandedImage(item.primaryImageSmall)
+                          setTitle(item.title)
+                          setArtist(item.artistDisplayName)
+                          setPeriod(item.period)
+                          setDimensions(item.dimensions)
+                          setClassification(item.classification)
+                          setMedium(item.medium)
                         }}
                         className="absolute top-8 left-1/2 -translate-1/2 w-[104px] h-[35px] glass rounded-[25px] text-white flex justify-center items-center gap-2 cursor-pointer"
                       >

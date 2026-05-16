@@ -28,7 +28,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full h-[75px] z-50">
+      <header className="fixed top-0 left-0 w-full h-[75px] z-5">
         <div className="min-w-full h-full flex items-center justify-between px-[156px]">
           <Link to={'/'}>
             <div className="flex justify-between items-center gap-[10px]">
