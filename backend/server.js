@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import { Redis } from '@upstash/redis'
 import pLimit from 'p-limit'
+import Anthropic from '@anthropic-ai/sdk'
 
 const app = express()
 
@@ -15,11 +16,6 @@ const allowedOrigins = new Set(
     .filter(Boolean),
 )
 
-if (process.env.NODE_ENV !== 'production') {
-  allowedOrigins.add('http://localhost:5173')
-  allowedOrigins.add('http://127.0.0.1:5173')
-}
-
 app.use(
   cors({
     origin(origin, callback) {
@@ -29,9 +25,22 @@ app.use(
     },
   }),
 )
+app.use(express.json({ limit: '1mb' }))
 
 const PORT = process.env.PORT || 3000
 const MET_BASE = 'https://collectionapi.metmuseum.org/public/collection/v1'
+const CLAUDE_MODEL = process.env.CLAUDE_MODEL || 'claude-opus-4-6'
+const CLAUDE_MAX_TOKENS = Number(process.env.CLAUDE_MAX_TOKENS ?? 20000)
+const CLAUDE_TEMPERATURE = Number(process.env.CLAUDE_TEMPERATURE ?? 1)
+const CLAUDE_OUTPUT_EFFORT = process.env.CLAUDE_OUTPUT_EFFORT || 'high'
+const DEFAULT_CLAUDE_SYSTEM_PROMPT =
+  '너는 이제부터 전시관 도슨트야. 내가 제공하는 이미지 url과 작품 제목, 작가 이름 등을 제공하면 이 작품에 대한 정보와 이야기를 도슨트가 설명하는 것 처럼 설명해줘. 작가 이름이나 작품 제목은 미상인 경우 Unknown으로 줄게.'
+const ANTHROPIC_API_KEY =
+  process.env.ANTHROPIC_API_KEY ?? process.env.CLAUDE_API_KEY ?? ''
+
+const anthropic = ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: ANTHROPIC_API_KEY })
+  : null
 
 // Upstash Redis (REST)
 const redis = new Redis({
@@ -39,14 +48,12 @@ const redis = new Redis({
   token: process.env.UPSTASH_REDIS_REST_TOKEN,
 })
 
-// 캐시 TTL
 const IDS_TTL_SEC = 60 * 60 * 24 * 7
 const OBJ_TTL_SEC = 60 * 60 * 24 * 30
 const DEPTS_TTL_SEC = 60 * 60 * 24 * 7
 const departmentsKey = () => `met:departments`
 const searchIdsKey = (paramsString) => `met:search:ids:${paramsString}`
 
-// 요청 제한
 const MAX_SIZE = 30
 const CONCURRENCY = 8
 const limit = pLimit(CONCURRENCY)
@@ -72,15 +79,39 @@ function pick(obj) {
   }
 }
 
-// 안 터지는 파서
 function safeParse(v) {
   if (v == null) return { ok: false, value: null }
-  if (typeof v !== 'string') return { ok: true, value: v } // 이미 객체/배열이면 그대로
+  if (typeof v !== 'string') return { ok: true, value: v }
   try {
     return { ok: true, value: JSON.parse(v) }
   } catch {
     return { ok: false, value: null }
   }
+}
+
+function toFilledText(v, fallback = 'Unknown') {
+  const text = String(v ?? '').trim()
+  return text || fallback
+}
+
+function buildClaudeUserPrompt(artwork) {
+  const lines = [
+    `Image URL: ${toFilledText(artwork.imageUrl)}`,
+    `Title: ${toFilledText(artwork.title)}`,
+    `Artist: ${toFilledText(artwork.artist)}`,
+  ]
+
+  return lines.join('\n')
+}
+
+function extractClaudeText(contentBlocks) {
+  if (!Array.isArray(contentBlocks)) return ''
+
+  return contentBlocks
+    .filter((block) => block?.type === 'text' && typeof block.text === 'string')
+    .map((block) => block.text.trim())
+    .filter(Boolean)
+    .join('\n\n')
 }
 
 async function getDepartmentObjectIDs(deptId) {
@@ -90,7 +121,6 @@ async function getDepartmentObjectIDs(deptId) {
   const parsed = safeParse(cached)
   if (parsed.ok) return parsed.value
 
-  // 깨진 캐시 제거
   if (cached != null) await redis.del(key)
 
   const r = await fetch(`${MET_BASE}/objects?departmentIds=${deptId}`)
@@ -139,7 +169,6 @@ async function fetchAndCacheObject(id) {
     return parsed.value
   }
 
-  // 깨진 캐시 제거
   if (cached != null) await redis.del(key)
 
   const r = await fetch(`${MET_BASE}/objects/${id}`)
@@ -249,11 +278,9 @@ app.get('/api/hall/:departmentId', async (req, res) => {
     const ids = await getDepartmentObjectIDs(departmentId)
     const total = ids.length
 
-    // size개 채우기 위해 cursor부터 계속 진행
     let i = cursor
     const items = []
 
-    // 최대 size*15개까지만 훑기
     const MAX_SCAN = Math.max(size * 50, 1000)
     const BATCH_SIZE = CONCURRENCY * 2
     let scanned = 0
@@ -280,11 +307,11 @@ app.get('/api/hall/:departmentId', async (req, res) => {
       meta: {
         departmentId,
         cursor,
-        nextCursor: i, // 다음 요청 시작점
+        nextCursor: i,
         size,
         total,
         returned: items.length,
-        exhausted: i >= total, // 더 이상 없음
+        exhausted: i >= total,
       },
       items,
     })
@@ -293,10 +320,75 @@ app.get('/api/hall/:departmentId', async (req, res) => {
   }
 })
 
-// 테스트
-app.get('/', (req, res) => res.send('서버 정상 작동중 🚀'))
+app.post('/api/claude/explain', async (req, res) => {
+  if (!anthropic) {
+    return res.status(500).json({
+      message: 'ANTHROPIC_API_KEY (or CLAUDE_API_KEY) is not configured',
+    })
+  }
 
-// 개발용: 필요할 때만 켜고, 배포 전 삭제
+  const artwork = req.body ?? {}
+  const hasAnyArtworkField = [artwork.imageUrl, artwork.title, artwork.artist]
+    .map((v) => String(v ?? '').trim())
+    .some(Boolean)
+
+  if (!hasAnyArtworkField) {
+    return res
+      .status(400)
+      .json({ message: 'At least one of imageUrl, title, artist is required.' })
+  }
+
+  try {
+    const message = await anthropic.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: CLAUDE_MAX_TOKENS,
+      temperature: CLAUDE_TEMPERATURE,
+      system:
+        String(process.env.CLAUDE_SYSTEM_PROMPT ?? '').trim() ||
+        DEFAULT_CLAUDE_SYSTEM_PROMPT,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: buildClaudeUserPrompt(artwork),
+            },
+          ],
+        },
+      ],
+      thinking: {
+        type: 'disabled',
+      },
+      output_config: {
+        effort: CLAUDE_OUTPUT_EFFORT,
+      },
+    })
+
+    const text = extractClaudeText(message?.content)
+    if (!text) {
+      return res
+        .status(502)
+        .json({ message: 'Claude response did not include text content.' })
+    }
+
+    return res.json({
+      text,
+      model: message?.model ?? CLAUDE_MODEL,
+    })
+  } catch (e) {
+    const status = Number(e?.status) || 500
+    const detail =
+      e?.error?.message ?? e?.message ?? 'Claude request failed unexpectedly.'
+
+    return res
+      .status(status)
+      .json({ message: detail })
+  }
+})
+
+app.get('/', (req, res) => res.send('server is running'))
+
 if (process.env.NODE_ENV !== 'production') {
   app.get('/api/debug/flush', async (req, res) => {
     await redis.flushdb()
