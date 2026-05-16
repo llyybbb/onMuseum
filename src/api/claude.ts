@@ -30,7 +30,7 @@ export async function fetchClaudeExplanation(
       const parsed = JSON.parse(text) as { message?: string }
       if (parsed?.message) message = parsed.message
     } catch {
-      // keep raw text when response is not JSON
+      message = text
     }
 
     throw new Error(message || `Claude explain failed: ${res.status}`)
