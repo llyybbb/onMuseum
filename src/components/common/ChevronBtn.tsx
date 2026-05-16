@@ -19,7 +19,7 @@ export default function ChevronBtn({
   return (
     <>
       <div
-        className={`rounded-[100%] bg-[var(--glass-button-color)] shadow-xl backdrop-blur-md flex justify-center items-center cursor-pointer ${className}`}
+        className={`rounded-[100%] bg-(--glass-button-color) shadow-xl backdrop-blur-md flex justify-center items-center cursor-pointer ${className}`}
         style={{ width: btnSize, height: btnSize }}
         onClick={onClick}
       >
