@@ -91,23 +91,23 @@ export default function ExpandModal({
           <X
             color="white"
             size={30}
-            className="absolute right-[20px] top-[20px] cursor-pointer z-20"
+            className="absolute right-5 top-5 cursor-pointer z-20"
             onClick={handleClose}
           />
         )}
 
         <div
-          className={`flex flex-col gap-[15px] absolute bottom-[20px] left-[20px] glass max-w-[30%] max-h-[35%] p-[20px] rounded-4xl text-white z-10 ${
+          className={`flex flex-col gap-3.75 absolute bottom-5 left-5 glass max-w-[30%] max-h-[35%] p-5 rounded-4xl text-white z-10 ${
             isImgFull ? 'hidden' : ''
           }`}
         >
-          <div className="flex flex-col gap-[5px]">
+          <div className="flex flex-col gap-1.25">
             <p className="font-semibold text-[30px]">{title}</p>
             <p className="font-semibold text-[20px]">{artist}</p>
           </div>
-          <div className="flex flex-col gap-[5px]">
+          <div className="flex flex-col gap-1.25">
             <p>
-              {classification}, {medium}
+              {classification}, {medium}                  
             </p>
             <p>{period}</p>
             <p>{dimensions}</p>
@@ -118,7 +118,7 @@ export default function ExpandModal({
           className={`size-full ${
             isImgFull
               ? 'overflow-auto flex items-start justify-center p-0'
-              : 'flex items-center justify-center p-[20px]'
+              : 'flex items-center justify-center p-5'
           }`}
         >
           <div
@@ -128,7 +128,7 @@ export default function ExpandModal({
               <Maximize
                 color="white"
                 size={24}
-                className="absolute right-[10px] top-[10px] cursor-pointer z-10"
+                className="absolute right-2.5 top-2.5 cursor-pointer z-10"
                 onClick={() => setIsImgFull(true)}
               />
             )}
@@ -136,7 +136,7 @@ export default function ExpandModal({
               <Minimize
                 color="white"
                 size={24}
-                className="absolute right-[10px] top-[10px] cursor-pointer z-10"
+                className="absolute right-2.5 top-2.5 cursor-pointer z-10"
                 onClick={() => setIsImgFull(false)}
               />
             )}
@@ -152,7 +152,7 @@ export default function ExpandModal({
         </div>
 
         <div
-          className={`absolute bottom-[20px] right-[20px] glass rounded-full size-[50px] flex justify-center items-center z-10 ${
+          className={`absolute bottom-5 right-5 glass rounded-full size-12.5 flex justify-center items-center z-10 ${
             isImgFull ? 'hidden' : ''
           }`}
         >
@@ -165,19 +165,19 @@ export default function ExpandModal({
         </div>
 
         {!isImgFull && (isGuideLoading || guideError || guideText) && (
-          <div className="absolute bottom-[20px] right-[85px] z-10 rounded-3xl text-white w-[35%] max-h-[40%] overflow-auto scrollbar-none">
+          <div className="absolute bottom-5 right-21.25 z-10 rounded-3xl text-white w-[35%] max-h-[40%] overflow-auto scrollbar-none">
             {isGuideLoading && (
-              <p className="glass rounded-3xl p-[18px] font-semibold">
+              <p className="glass rounded-3xl p-4.5 font-semibold">
                 도슨트가 설명을 준비하고 있어요...
               </p>
             )}
             {!isGuideLoading && guideError && (
-              <p className="text-red-200 glass rounded-3xl p-[18px]">
+              <p className="text-red-200 glass rounded-3xl p-4.5">
                 {guideError}
               </p>
             )}
             {!isGuideLoading && !guideError && guideText && (
-              <div className="size-full glass rounded-3xl p-[18px] whitespace-pre-wrap scrollbar-none">
+              <div className="size-full glass rounded-3xl p-4.5 whitespace-pre-wrap scrollbar-none">
                 <div className='prose text-white prose-headings:text-white prose-strong:font-semibold prose-strong:text-white prose-strong:text-xl'>
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{guideText}</ReactMarkdown>
                 </div>
