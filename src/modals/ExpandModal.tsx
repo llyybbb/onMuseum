@@ -2,6 +2,9 @@ import { Maximize, Minimize, Sparkles, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { fetchClaudeExplanation } from '../api/claude'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from './../../node_modules/remark-gfm/lib/index';
+
 
 type Props = {
   isOpen: boolean
@@ -162,13 +165,23 @@ export default function ExpandModal({
         </div>
 
         {!isImgFull && (isGuideLoading || guideError || guideText) && (
-          <div className="absolute bottom-[20px] right-[85px] z-10 glass text-white p-[18px] rounded-3xl w-[35%] max-h-[40%] overflow-auto">
-            {isGuideLoading && <p>Preparing docent explanation...</p>}
+          <div className="absolute bottom-[20px] right-[85px] z-10 rounded-3xl text-white w-[35%] max-h-[40%] overflow-auto scrollbar-none">
+            {isGuideLoading && (
+              <p className="glass rounded-3xl p-[18px] font-semibold">
+                도슨트가 설명을 준비하고 있어요...
+              </p>
+            )}
             {!isGuideLoading && guideError && (
-              <p className="text-red-200">{guideError}</p>
+              <p className="text-red-200 glass rounded-3xl p-[18px]">
+                {guideError}
+              </p>
             )}
             {!isGuideLoading && !guideError && guideText && (
-              <p className="leading-relaxed whitespace-pre-wrap">{guideText}</p>
+              <div className="size-full glass rounded-3xl p-[18px] whitespace-pre-wrap scrollbar-none">
+                <div className='prose text-white prose-headings:text-white prose-strong:font-semibold prose-strong:text-white prose-strong:text-xl'>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{guideText}</ReactMarkdown>
+                </div>
+              </div>
             )}
           </div>
         )}
