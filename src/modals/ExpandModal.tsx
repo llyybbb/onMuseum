@@ -1,10 +1,10 @@
 import { Maximize, Minimize, Sparkles, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import gsap from 'gsap'
 import { fetchClaudeExplanation } from '../api/claude'
 import ReactMarkdown from 'react-markdown'
-import remarkGfm from './../../node_modules/remark-gfm/lib/index';
-
+import remarkGfm from './../../node_modules/remark-gfm/lib/index'
 
 type Props = {
   isOpen: boolean
@@ -33,24 +33,112 @@ export default function ExpandModal({
   const [guideText, setGuideText] = useState('')
   const [guideError, setGuideError] = useState('')
   const [isGuideLoading, setIsGuideLoading] = useState(false)
+  const [isSparklesExpanded, setIsSparklesExpanded] = useState(false)
+  const sparklesButtonRef = useRef<HTMLDivElement | null>(null)
+  const sparklesLabelRef = useRef<HTMLSpanElement | null>(null)
+  const sparklesContentRef = useRef<HTMLDivElement | null>(null)
+  const sparklesTimelineRef = useRef<gsap.core.Timeline | null>(null)
 
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) {
+      setIsSparklesExpanded(false)
+      return
+    }
+
     setGuideText('')
     setGuideError('')
     setIsGuideLoading(false)
+    setIsSparklesExpanded(false)
   }, [isOpen, src, title, artist])
+
+  useEffect(() => {
+    if (
+      !isOpen ||
+      !sparklesButtonRef.current ||
+      !sparklesLabelRef.current ||
+      !sparklesContentRef.current
+    ) {
+      return
+    }
+
+    const ctx = gsap.context(() => {
+      const expandedWidth = Math.min(window.innerWidth * 0.35, 520)
+      const expandedHeight = Math.min(window.innerHeight * 0.4, 420)
+
+      gsap.set(sparklesLabelRef.current, {
+        autoAlpha: 0,
+        width: 0,
+        x: -8,
+      })
+      gsap.set(sparklesContentRef.current, {
+        autoAlpha: 0,
+        y: 8,
+      })
+
+      sparklesTimelineRef.current = gsap
+        .timeline({
+          paused: true,
+          defaults: {
+            duration: 0.34,
+            ease: 'power3.out',
+            easeReverse: 'power3.in',
+          },
+        })
+        .to(sparklesButtonRef.current, {
+          width: expandedWidth,
+          height: expandedHeight,
+          borderRadius: 24,
+          ease: 'back.out(1.4)',
+          easeReverse: 'power2.out',
+        })
+        .to(
+          sparklesLabelRef.current,
+          {
+            autoAlpha: 1,
+            width: 'auto',
+            x: 0,
+            duration: 0.22,
+          },
+          '<0.08',
+        )
+        .to(
+          sparklesContentRef.current,
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.2,
+          },
+          '<0.08',
+        )
+    }, sparklesButtonRef)
+
+    return () => {
+      ctx.revert()
+      sparklesTimelineRef.current = null
+    }
+  }, [isOpen])
 
   const handleClose = () => {
     setIsImgFull(false)
     setGuideText('')
     setGuideError('')
     setIsGuideLoading(false)
+    setIsSparklesExpanded(false)
     onClose()
   }
 
   const handleSparklesClick = async () => {
-    if (isGuideLoading) return
+    const nextExpanded = !isSparklesExpanded
+
+    if (nextExpanded) {
+      sparklesTimelineRef.current?.play()
+    } else {
+      sparklesTimelineRef.current?.reverse()
+    }
+
+    setIsSparklesExpanded(nextExpanded)
+
+    if (!nextExpanded || isGuideLoading || guideText) return
 
     setGuideError('')
     setIsGuideLoading(true)
@@ -107,7 +195,7 @@ export default function ExpandModal({
           </div>
           <div className="flex flex-col gap-1.25">
             <p>
-              {classification}, {medium}                  
+              {classification}, {medium}
             </p>
             <p>{period}</p>
             <p>{dimensions}</p>
@@ -152,39 +240,64 @@ export default function ExpandModal({
         </div>
 
         <div
-          className={`absolute bottom-5 right-5 glass rounded-full size-12.5 flex justify-center items-center z-10 ${
+          ref={sparklesButtonRef}
+          className={`absolute bottom-5 right-5 glass ${
+            isSparklesExpanded ? 'rounded-4xl' : 'rounded-full'
+          } h-12.5 w-12.5 min-w-12.5 flex flex-col items-start z-10 overflow-hidden text-white ${
             isImgFull ? 'hidden' : ''
           }`}
         >
-          <Sparkles
-            color="white"
-            size={30}
-            className={`cursor-pointer ${isGuideLoading ? 'opacity-60' : ''}`}
+          <button
+            type="button"
+            aria-expanded={isSparklesExpanded}
+            className={`h-12.5 min-h-12.5 w-full flex items-center  border-0 bg-transparent text-white cursor-pointer ${
+              isSparklesExpanded
+                ? 'justify-start px-4 gap-2'
+                : 'justify-center px-0'
+            }`}
             onClick={handleSparklesClick}
-          />
-        </div>
+          >
+            <Sparkles
+              color="white"
+              size={30}
+              className={`shrink-0 ${isGuideLoading ? 'opacity-60' : ''}`}
+            />
+            <span
+              ref={sparklesLabelRef}
+              className="block overflow-hidden whitespace-nowrap text-sm font-semibold leading-none"
+            >
+              AI Docent
+            </span>
+          </button>
 
-        {!isImgFull && (isGuideLoading || guideError || guideText) && (
-          <div className="absolute bottom-5 right-21.25 z-10 rounded-3xl text-white w-[35%] max-h-[40%] overflow-auto scrollbar-none">
-            {isGuideLoading && (
-              <p className="glass rounded-3xl p-4.5 font-semibold">
-                도슨트가 설명을 준비하고 있어요...
-              </p>
-            )}
-            {!isGuideLoading && guideError && (
-              <p className="text-red-200 glass rounded-3xl p-4.5">
-                {guideError}
-              </p>
-            )}
-            {!isGuideLoading && !guideError && guideText && (
-              <div className="size-full glass rounded-3xl p-4.5 whitespace-pre-wrap scrollbar-none">
-                <div className='prose text-white prose-headings:text-white prose-strong:font-semibold prose-strong:text-white prose-strong:text-xl'>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{guideText}</ReactMarkdown>
+          <div
+            ref={sparklesContentRef}
+            className="w-full flex-1 overflow-auto scrollbar-none px-4 pb-4"
+          >
+            {isSparklesExpanded &&
+              (isGuideLoading || guideError || guideText) && (
+                <div className="text-white size-full overflow-auto scrollbar-none">
+                  {isGuideLoading && (
+                    <p className="font-semibold">
+                      도슨트가 설명을 준비하고 있어요...
+                    </p>
+                  )}
+                  {!isGuideLoading && guideError && (
+                    <p className="text-red-200">{guideError}</p>
+                  )}
+                  {!isGuideLoading && !guideError && guideText && (
+                    <div className="size-full whitespace-pre-wrap scrollbar-none">
+                      <div className="prose text-white prose-headings:text-white prose-strong:font-semibold prose-strong:text-white prose-strong:text-xl">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {guideText}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
           </div>
-        )}
+        </div>
       </div>
     </div>,
     document.body,
