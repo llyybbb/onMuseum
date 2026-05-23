@@ -186,7 +186,7 @@ export default function ExpandModal({
 
         <div
           className={`flex flex-col gap-3.75 absolute bottom-5 left-5 glass max-w-[30%] max-h-[35%] p-5 rounded-4xl text-white z-10 ${
-            isImgFull ? 'hidden' : ''
+            isImgFull ? 'left-5' : ''
           }`}
         >
           <div className="flex flex-col gap-1.25">
@@ -243,9 +243,7 @@ export default function ExpandModal({
           ref={sparklesButtonRef}
           className={`absolute bottom-5 right-5 glass ${
             isSparklesExpanded ? 'rounded-4xl' : 'rounded-full'
-          } h-12.5 w-12.5 min-w-12.5 flex flex-col items-start z-10 overflow-hidden text-white ${
-            isImgFull ? 'hidden' : ''
-          }`}
+          } h-12.5 w-12.5 min-w-12.5 flex flex-col items-start z-10 overflow-hidden text-white ${isImgFull ? 'right-10' : ''} `}
         >
           <button
             type="button"
