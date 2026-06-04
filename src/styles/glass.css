@@ -45,7 +45,6 @@
   background: linear-gradient(var(--glass-bg), var(--glass-bg2));
   backdrop-filter: blur(10px);
    -webkit-backdrop-filter: blur(10px) ; 
-  z-index: 1;
 }
 
 
@@ -66,5 +65,4 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
 }
-
 

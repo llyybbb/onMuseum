@@ -62,8 +62,11 @@ export default function ExpandModal({
     }
 
     const ctx = gsap.context(() => {
-      const expandedWidth = Math.min(window.innerWidth * 0.35, 520)
-      const expandedHeight = Math.min(window.innerHeight * 0.4, 420)
+      const aiExpandedWidth = Math.min(window.innerWidth * 0.35, 520)
+      const modalHeight =
+        sparklesButtonRef.current?.parentElement?.getBoundingClientRect()
+          .height ?? window.innerHeight
+      const aiExpandedHeight = Math.max(modalHeight - 80, 50)
 
       gsap.set(sparklesLabelRef.current, {
         autoAlpha: 0,
@@ -85,8 +88,8 @@ export default function ExpandModal({
           },
         })
         .to(sparklesButtonRef.current, {
-          width: expandedWidth,
-          height: expandedHeight,
+          width: aiExpandedWidth,
+          height: aiExpandedHeight,
           borderRadius: 24,
           ease: 'back.out(1.4)',
           easeReverse: 'power2.out',
@@ -216,7 +219,7 @@ export default function ExpandModal({
               <Maximize
                 color="white"
                 size={24}
-                className="absolute right-2.5 top-2.5 cursor-pointer z-10"
+                className="absolute right-2.5 top-2.5 cursor-pointer z-5"
                 onClick={() => setIsImgFull(true)}
               />
             )}
@@ -224,7 +227,7 @@ export default function ExpandModal({
               <Minimize
                 color="white"
                 size={24}
-                className="absolute right-2.5 top-2.5 cursor-pointer z-10"
+                className="absolute right-2.5 top-2.5 cursor-pointer z-5"
                 onClick={() => setIsImgFull(false)}
               />
             )}
@@ -270,7 +273,7 @@ export default function ExpandModal({
 
           <div
             ref={sparklesContentRef}
-            className="w-full flex-1 overflow-auto scrollbar-none px-4 pb-4"
+            className="w-full flex-1 overflow-auto scrollbar-none px-4 pb-4 z-10"
           >
             {isSparklesExpanded &&
               (isGuideLoading || guideError || guideText) && (
