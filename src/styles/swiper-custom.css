@@ -70,3 +70,49 @@
 .swiper-slide:hover .description {
   opacity: 1;
 }
+
+.hall-marquee-row {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.hall-marquee-track {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: none;
+  white-space: nowrap;
+}
+
+.hall-marquee-row.is-left-aligned .hall-marquee-track,
+.hall-marquee-row.is-overflowing .hall-marquee-track {
+  justify-content: flex-start;
+  width: max-content;
+}
+
+.hall-marquee-group,
+.hall-marquee-copy {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.hall-marquee-row.is-overflowing .hall-marquee-group,
+.hall-marquee-row.is-overflowing .hall-marquee-copy {
+  padding-right: 36px;
+}
+
+.hall-marquee-content {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.hall-marquee-copy {
+  display: none;
+}
+
+.hall-marquee-row.is-overflowing .hall-marquee-copy {
+  display: inline-block;
+}

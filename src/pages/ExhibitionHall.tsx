@@ -9,6 +9,8 @@ import { EffectCoverflow, Navigation } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
 import ChevronBtn from '../components/common/ChevronBtn'
 import { Maximize } from 'lucide-react'
+import gsap from 'gsap'
+import { Observer } from 'gsap/Observer'
 import {
   Link,
   useLocation,
@@ -17,10 +19,12 @@ import {
   useSearchParams,
 } from 'react-router-dom'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useDepartments } from '../hooks/useDepartments'
 import ExpandModal from '../modals/ExpandModal'
 import { withApiBase } from '../api/baseUrl'
+
+gsap.registerPlugin(Observer)
 
 type MetItem = {
   objectID: number
@@ -48,6 +52,35 @@ type HallResponse = {
     exhausted: boolean
   }
   items: MetItem[]
+}
+
+type MarqueeTextProps = {
+  text?: string
+  className?: string
+  align?: 'left' | 'center'
+}
+
+function MarqueeText({
+  text,
+  className = '',
+  align = 'center',
+}: MarqueeTextProps) {
+  const displayText = text?.trim() || 'Unknown'
+
+  return (
+    <div className={`hall-marquee-row is-${align}-aligned ${className}`}>
+      <div className="hall-marquee-track">
+        <span className="hall-marquee-group">
+          <span className="hall-marquee-content">
+            {displayText}
+          </span>
+        </span>
+        <span className="hall-marquee-copy" aria-hidden="true">
+          {displayText}
+        </span>
+      </div>
+    </div>
+  )
 }
 
 export default function ExhibitionHall() {
@@ -85,6 +118,7 @@ export default function ExhibitionHall() {
   const [isSearching, setIsSearching] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const marqueeScope = useRef<HTMLDivElement>(null)
 
   const headerTitle = isSearchMode ? keyword || 'Search' : departmentName
 
@@ -145,6 +179,117 @@ export default function ExhibitionHall() {
     }
   }, [isSearching])
 
+  useLayoutEffect(() => {
+    if (!data || !marqueeScope.current) return
+
+    const ctx = gsap.context(() => {
+      let timelines: gsap.core.Tween[] = []
+      let frameId = 0
+      let isDisposed = false
+
+      const setupMarquees = () => {
+        if (isDisposed) return
+
+        timelines.forEach((timeline) => timeline.kill())
+        timelines = []
+
+        const rows = gsap.utils.toArray<HTMLElement>('.hall-marquee-row')
+
+        rows.forEach((row) => {
+          const box = row.closest<HTMLElement>('.hall-marquee-box')
+          const track = row.querySelector<HTMLElement>('.hall-marquee-track')
+          const group = row.querySelector<HTMLElement>('.hall-marquee-group')
+          const content = row.querySelector<HTMLElement>(
+            '.hall-marquee-content',
+          )
+
+          if (!box || !track || !group || !content) return
+
+          row.classList.remove('is-overflowing')
+          gsap.killTweensOf(track)
+          gsap.set(track, { x: 0, clearProps: 'transform' })
+
+          const rowWidth = row.getBoundingClientRect().width
+          const contentWidth = content.scrollWidth
+
+          if (contentWidth <= rowWidth) return
+
+          row.classList.add('is-overflowing')
+
+          const distance = group.offsetWidth
+          const startX = 0
+
+          gsap.set(track, { x: startX })
+
+          timelines.push(
+            gsap.fromTo(
+              track,
+              { x: startX },
+              {
+                x: startX - distance,
+                duration: Math.max(distance / 40, 8),
+                ease: 'none',
+                repeat: -1,
+                repeatDelay: 0.4,
+              },
+            ),
+          )
+        })
+      }
+
+      const queueSetup = () => {
+        window.cancelAnimationFrame(frameId)
+        frameId = window.requestAnimationFrame(() => {
+          frameId = window.requestAnimationFrame(setupMarquees)
+        })
+      }
+
+      queueSetup()
+      document.fonts?.ready.then(queueSetup)
+
+      const resizeObserver = new ResizeObserver(() => {
+        queueSetup()
+      })
+
+      resizeObserver.observe(marqueeScope.current!)
+      gsap
+        .utils
+        .toArray<HTMLElement>('.hall-marquee-box')
+        .forEach((box) => resizeObserver.observe(box))
+
+      const observer = Observer.create({
+        onChangeY(self) {
+          if (timelines.length === 0) return
+
+          let factor = 2.5
+
+          if (self.deltaY < 0) {
+            factor *= -1
+          }
+
+          gsap
+            .timeline({ defaults: { ease: 'none' } })
+            .to(timelines, {
+              timeScale: factor * 2.5,
+              duration: 0.2,
+              overwrite: true,
+            })
+            .to(timelines, { timeScale: factor / 2.5, duration: 1 }, '+=0.3')
+        },
+      })
+
+      return () => {
+        isDisposed = true
+        window.cancelAnimationFrame(frameId)
+        resizeObserver.disconnect()
+        observer.kill()
+        timelines.forEach((timeline) => timeline.kill())
+      }
+    }, marqueeScope)
+
+    return () => ctx.revert()
+  }, [activeIndex, data])
+
   if (isLoading) return <p>로딩 중..</p>
   if (error) return <p>error: {(error as Error).message}</p>
   if (!data) return <p>data 없음</p>
@@ -161,7 +306,10 @@ export default function ExhibitionHall() {
         <div className="h-screen w-screen bg-black/50 backdrop-blur-[3px]">
           <div
             className="h-full w-full flex flex-col items-center justify-center gap-[40px]"
-            ref={modalBackground}
+            ref={(node) => {
+              modalBackground.current = node
+              marqueeScope.current = node
+            }}
             onClick={(e) => {
               if (e.target === modalBackground.current) {
                 setModalOpen(false)
@@ -288,14 +436,32 @@ export default function ExhibitionHall() {
                         <Maximize color="white" size={16} />
                         Expand
                       </div>
-                      <div className="w-[430px] h-[40%] glass absolute bottom-[5px] left-1/2 -translate-x-1/2 rounded-[30px] flex flex-col gap-2 p-[20px] description">
-                        <p className="text-white font-semibold text-[30px]">
-                          {item.title}
-                        </p>
-                        <p className="text-white">{item.medium}</p>
-                        <p className="text-white">{item.period}</p>
-                        <p className="text-white">{item.dimensions}</p>
-                        <p className="text-white">{item.classification}</p>
+                      <div className="hall-marquee-box w-[430px] h-[40%] glass absolute bottom-[5px] left-1/2 -translate-x-1/2 rounded-[30px] flex flex-col gap-2 p-[20px] description overflow-hidden">
+                        <MarqueeText
+                          text={item.title}
+                          className="text-white font-semibold text-[30px]"
+                          align="left"
+                        />
+                        <MarqueeText
+                          text={item.medium}
+                          className="text-white"
+                          align="left"
+                        />
+                        <MarqueeText
+                          text={item.period}
+                          className="text-white"
+                          align="left"
+                        />
+                        <MarqueeText
+                          text={item.dimensions}
+                          className="text-white"
+                          align="left"
+                        />
+                        <MarqueeText
+                          text={item.classification}
+                          className="text-white"
+                          align="left"
+                        />
                       </div>
                     </div>
                   </SwiperSlide>
@@ -310,16 +476,21 @@ export default function ExhibitionHall() {
                 chevronSize="20px"
                 className="btn-prev"
               />
-              <div className="flex flex-col items-center w-[250px] overflow-hidden">
-                <p className="text-white font-semibold text-[18px] mb-[4px]">
-                  {activeItem?.artistDisplayName || 'Unknown'}
-                </p>
-                <p className="text-white text-[16px]">
-                  {activeItem?.artistRole}
-                </p>
-                <p className="text-white text-[16px]">
-                  {activeItem?.artistDisplayBio}
-                </p>
+              <div className="hall-marquee-box flex min-w-0 flex-1 flex-col items-center justify-center overflow-hidden">
+                <MarqueeText
+                  text={activeItem?.artistDisplayName || 'Unknown'}
+                  className="text-white font-semibold text-[18px] mb-[4px]"
+                />
+
+                <MarqueeText
+                  text={activeItem?.artistRole}
+                  className="text-white text-[16px]"
+                />
+
+                <MarqueeText
+                  text={activeItem?.artistDisplayBio}
+                  className="text-white text-[16px]"
+                />
               </div>
               <ChevronBtn
                 direction="right"
