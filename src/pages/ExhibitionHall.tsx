@@ -184,6 +184,9 @@ export default function ExhibitionHall() {
 
     const ctx = gsap.context(() => {
       let timelines: gsap.core.Tween[] = []
+      let hoveredMarqueeBox: HTMLElement | null = null
+      let hoverCleanupFns: Array<() => void> = []
+      const timelinesByBox = new Map<HTMLElement, gsap.core.Tween[]>()
       let frameId = 0
       let isDisposed = false
 
@@ -191,7 +194,11 @@ export default function ExhibitionHall() {
         if (isDisposed) return
 
         timelines.forEach((timeline) => timeline.kill())
+        hoverCleanupFns.forEach((cleanup) => cleanup())
         timelines = []
+        hoverCleanupFns = []
+        timelinesByBox.clear()
+        hoveredMarqueeBox = null
 
         const rows = gsap.utils.toArray<HTMLElement>('.hall-marquee-row')
 
@@ -221,19 +228,39 @@ export default function ExhibitionHall() {
 
           gsap.set(track, { x: startX })
 
-          timelines.push(
-            gsap.fromTo(
-              track,
-              { x: startX },
-              {
-                x: startX - distance,
-                duration: Math.max(distance / 40, 8),
-                ease: 'none',
-                repeat: -1,
-                repeatDelay: 0.4,
-              },
-            ),
+          const tween = gsap.fromTo(
+            track,
+            { x: startX },
+            {
+              x: startX - distance,
+              duration: Math.max(distance / 40, 8),
+              ease: 'none',
+              repeat: -1,
+              repeatDelay: 0.4,
+            },
           )
+
+          timelines.push(tween)
+          timelinesByBox.set(box, [...(timelinesByBox.get(box) ?? []), tween])
+        })
+
+        timelinesByBox.forEach((_boxTimelines, box) => {
+          const onEnter = () => {
+            hoveredMarqueeBox = box
+          }
+          const onLeave = () => {
+            if (hoveredMarqueeBox === box) {
+              hoveredMarqueeBox = null
+            }
+          }
+
+          box.addEventListener('mouseenter', onEnter)
+          box.addEventListener('mouseleave', onLeave)
+
+          hoverCleanupFns.push(() => {
+            box.removeEventListener('mouseenter', onEnter)
+            box.removeEventListener('mouseleave', onLeave)
+          })
         })
       }
 
@@ -259,7 +286,10 @@ export default function ExhibitionHall() {
 
       const observer = Observer.create({
         onChangeY(self) {
-          if (timelines.length === 0) return
+          if (!hoveredMarqueeBox) return
+
+          const hoveredTimelines = timelinesByBox.get(hoveredMarqueeBox)
+          if (!hoveredTimelines?.length) return
 
           let factor = 2.5
 
@@ -269,12 +299,16 @@ export default function ExhibitionHall() {
 
           gsap
             .timeline({ defaults: { ease: 'none' } })
-            .to(timelines, {
+            .to(hoveredTimelines, {
               timeScale: factor * 2.5,
               duration: 0.2,
               overwrite: true,
             })
-            .to(timelines, { timeScale: factor / 2.5, duration: 1 }, '+=0.3')
+            .to(
+              hoveredTimelines,
+              { timeScale: factor / 2.5, duration: 1 },
+              '+=0.3',
+            )
         },
       })
 
@@ -284,6 +318,7 @@ export default function ExhibitionHall() {
         resizeObserver.disconnect()
         observer.kill()
         timelines.forEach((timeline) => timeline.kill())
+        hoverCleanupFns.forEach((cleanup) => cleanup())
       }
     }, marqueeScope)
 
