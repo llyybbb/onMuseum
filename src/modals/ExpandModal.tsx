@@ -2,9 +2,14 @@ import { Maximize, Minimize, Sparkles, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
+import { TextPlugin } from 'gsap/TextPlugin'
 import { fetchClaudeExplanation } from '../api/claude'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from './../../node_modules/remark-gfm/lib/index'
+
+gsap.registerPlugin(TextPlugin)
+
+const GUIDE_LOADING_TEXT = '도슨트가 설명을 준비하고 있어요'
 
 type Props = {
   isOpen: boolean
@@ -38,6 +43,7 @@ export default function ExpandModal({
   const sparklesLabelRef = useRef<HTMLSpanElement | null>(null)
   const sparklesContentRef = useRef<HTMLDivElement | null>(null)
   const sparklesTimelineRef = useRef<gsap.core.Timeline | null>(null)
+  const guideLoadingTextRef = useRef<HTMLParagraphElement | null>(null)
 
   useEffect(() => {
     if (!isOpen) {
@@ -120,6 +126,37 @@ export default function ExpandModal({
       sparklesTimelineRef.current = null
     }
   }, [isOpen])
+
+  useEffect(() => {
+    if (!isGuideLoading || !guideLoadingTextRef.current) return
+
+    const ctx = gsap.context(() => {
+      gsap.set(guideLoadingTextRef.current, {
+        text: GUIDE_LOADING_TEXT,
+      })
+
+      gsap
+        .timeline({ repeat: -1 })
+        .to(guideLoadingTextRef.current, {
+          duration: 0.9,
+          text: {
+            value: `${GUIDE_LOADING_TEXT}...`,
+            type: 'diff',
+          },
+          ease: 'sine.inOut',
+        })
+        .to(guideLoadingTextRef.current, {
+          duration: 0.9,
+          text: {
+            value: GUIDE_LOADING_TEXT,
+            type: 'diff',
+          },
+          ease: 'sine.inOut',
+        })
+    }, guideLoadingTextRef)
+
+    return () => ctx.revert()
+  }, [isGuideLoading])
 
   const handleClose = () => {
     setIsImgFull(false)
@@ -279,8 +316,12 @@ export default function ExpandModal({
               (isGuideLoading || guideError || guideText) && (
                 <div className="text-white size-full overflow-auto scrollbar-none">
                   {isGuideLoading && (
-                    <p className="font-semibold">
-                      도슨트가 설명을 준비하고 있어요...
+                    <p
+                      ref={guideLoadingTextRef}
+                      className="font-semibold"
+                      aria-live="polite"
+                    >
+                      {GUIDE_LOADING_TEXT}
                     </p>
                   )}
                   {!isGuideLoading && guideError && (
