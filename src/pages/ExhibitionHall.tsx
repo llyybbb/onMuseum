@@ -2,10 +2,12 @@
 import '../styles/swiper-custom.css'
 
 import { Swiper, SwiperSlide } from 'swiper/react'
+import type { Swiper as SwiperClass } from 'swiper'
 import 'swiper/css'
-import 'swiper/css/navigation'
 import 'swiper/css/pagination'
-import { EffectCoverflow, Navigation } from 'swiper/modules'
+import Skeleton, { SkeletonTheme } from 'react-loading-skeleton'
+import 'react-loading-skeleton/dist/skeleton.css'
+import { EffectCoverflow } from 'swiper/modules'
 import 'swiper/css/effect-coverflow'
 import ChevronBtn from '../components/common/ChevronBtn'
 import { Maximize } from 'lucide-react'
@@ -119,6 +121,7 @@ export default function ExhibitionHall() {
   const [searchTerm, setSearchTerm] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
   const marqueeScope = useRef<HTMLDivElement>(null)
+  const swiperRef = useRef<SwiperClass | null>(null)
 
   const headerTitle = isSearchMode ? keyword || 'Search' : departmentName
 
@@ -325,15 +328,20 @@ export default function ExhibitionHall() {
     return () => ctx.revert()
   }, [activeIndex, data])
 
-  if (isLoading) return <p>로딩 중..</p>
   if (error) return <p>error: {(error as Error).message}</p>
-  if (!data) return <p>data 없음</p>
 
   const items = data?.pages.flatMap((p) => p.items) ?? []
   const activeItem = items[activeIndex]
+  const skeletonSlides = Array.from({ length: 5 }, (_, index) => index)
+
+  if (!isLoading && !data) return <p>data 없음</p>
 
   return (
-    <>
+    <SkeletonTheme
+      baseColor="rgba(255, 255, 255, 0.12)"
+      highlightColor="rgba(255, 255, 255, 0.28)"
+      borderRadius={30}
+    >
       <div
         style={{ backgroundImage: `url('/exhibitionBg.svg')` }}
         className="h-screen w-screen bg-cover bg-center "
@@ -367,7 +375,10 @@ export default function ExhibitionHall() {
             <div
               className={`glass w-[984px] h-[80px] flex  ${isSearchMode ? 'justify-center' : 'justify-between'} items-center px-[20px] rounded-[40px]`}
             >
-              {!isSearchMode && (
+              {!isSearchMode && isLoading && (
+                <Skeleton circle width={44} height={44} />
+              )}
+              {!isSearchMode && !isLoading && (
                 <Link to={`/hall/${prevDept?.departmentId}`}>
                   <ChevronBtn
                     direction="left"
@@ -405,10 +416,15 @@ export default function ExhibitionHall() {
                     />
                   </form>
                 ) : (
-                  <span>{headerTitle}</span>
+                  <span>
+                    {headerTitle || <Skeleton width={220} height={24} />}
+                  </span>
                 )}
               </div>
-              {!isSearchMode && (
+              {!isSearchMode && isLoading && (
+                <Skeleton circle width={44} height={44} />
+              )}
+              {!isSearchMode && !isLoading && (
                 <Link to={`/hall/${nextDept?.departmentId}`}>
                   <ChevronBtn
                     direction="right"
@@ -434,9 +450,13 @@ export default function ExhibitionHall() {
                   slideShadows: false,
                   scale: 0.9,
                 }}
-                navigation={{ nextEl: '.btn-next', prevEl: '.btn-prev' }}
-                modules={[EffectCoverflow, Navigation]}
+                modules={[EffectCoverflow]}
+                onSwiper={(swiper) => {
+                  swiperRef.current = swiper
+                }}
                 onSlideChange={(swiper) => {
+                  if (isLoading) return
+
                   const idx = swiper.realIndex
                   setActiveIndex(idx)
 
@@ -451,92 +471,132 @@ export default function ExhibitionHall() {
                 }}
                 className="swiper absolute left-1/2 -translate-x-1/2"
               >
-                {items.map((item) => (
-                  <SwiperSlide key={item.objectID}>
-                    <div className="slide-inner relative">
-                      <img src={item.primaryImageSmall} loading="lazy" />
-                      <div
-                        onClick={() => {
-                          setModalOpen(true)
-                          setExpandedImage(item.primaryImageSmall)
-                          setTitle(item.title)
-                          setArtist(item.artistDisplayName)
-                          setPeriod(item.period)
-                          setDimensions(item.dimensions)
-                          setClassification(item.classification)
-                          setMedium(item.medium)
-                        }}
-                        className="absolute top-8 left-1/2 -translate-1/2 w-[104px] h-[35px] glass rounded-[25px] text-white flex justify-center items-center gap-2 cursor-pointer"
-                      >
-                        <Maximize color="white" size={16} />
-                        Expand
+                {isLoading &&
+                  skeletonSlides.map((index) => (
+                    <SwiperSlide key={`skeleton-${index}`}>
+                      <div className="slide-inner relative">
+                        <Skeleton
+                          width="100%"
+                          height="100%"
+                          borderRadius={30}
+                        />
+                        <div className="hall-skeleton-description">
+                          <Skeleton width="86%" height={30} />
+                          <Skeleton width="70%" height={16} />
+                          <Skeleton width="62%" height={16} />
+                          <Skeleton width="78%" height={16} />
+                          <Skeleton width="54%" height={16} />
+                        </div>
                       </div>
-                      <div className="hall-marquee-box w-[430px] h-[40%] glass absolute bottom-[5px] left-1/2 -translate-x-1/2 rounded-[30px] flex flex-col gap-2 p-[20px] description overflow-hidden">
-                        <MarqueeText
-                          text={item.title}
-                          className="text-white font-semibold text-[30px]"
-                          align="left"
-                        />
-                        <MarqueeText
-                          text={item.medium}
-                          className="text-white"
-                          align="left"
-                        />
-                        <MarqueeText
-                          text={item.period}
-                          className="text-white"
-                          align="left"
-                        />
-                        <MarqueeText
-                          text={item.dimensions}
-                          className="text-white"
-                          align="left"
-                        />
-                        <MarqueeText
-                          text={item.classification}
-                          className="text-white"
-                          align="left"
-                        />
+                    </SwiperSlide>
+                  ))}
+                {!isLoading &&
+                  items.map((item) => (
+                    <SwiperSlide key={item.objectID}>
+                      <div className="slide-inner relative">
+                        <img src={item.primaryImageSmall} loading="lazy" />
+                        <div
+                          onClick={() => {
+                            setModalOpen(true)
+                            setExpandedImage(item.primaryImageSmall)
+                            setTitle(item.title)
+                            setArtist(item.artistDisplayName)
+                            setPeriod(item.period)
+                            setDimensions(item.dimensions)
+                            setClassification(item.classification)
+                            setMedium(item.medium)
+                          }}
+                          className="absolute top-8 left-1/2 -translate-1/2 w-[104px] h-[35px] glass rounded-[25px] text-white flex justify-center items-center gap-2 cursor-pointer"
+                        >
+                          <Maximize color="white" size={16} />
+                          Expand
+                        </div>
+                        <div className="hall-marquee-box w-[430px] h-[40%] glass absolute bottom-[5px] left-1/2 -translate-x-1/2 rounded-[30px] flex flex-col gap-2 p-[20px] description overflow-hidden">
+                          <MarqueeText
+                            text={item.title}
+                            className="text-white font-semibold text-[30px]"
+                            align="left"
+                          />
+                          <MarqueeText
+                            text={item.medium}
+                            className="text-white"
+                            align="left"
+                          />
+                          <MarqueeText
+                            text={item.period}
+                            className="text-white"
+                            align="left"
+                          />
+                          <MarqueeText
+                            text={item.dimensions}
+                            className="text-white"
+                            align="left"
+                          />
+                          <MarqueeText
+                            text={item.classification}
+                            className="text-white"
+                            align="left"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </SwiperSlide>
-                ))}
+                    </SwiperSlide>
+                  ))}
               </Swiper>
             </div>
 
             <div className="glass w-[434px] h-[98px] p-[20x] flex justify-between items-center gap-[20px]  px-[20px] rounded-[40px]">
-              <ChevronBtn
-                direction="left"
-                btnSize="35px"
-                chevronSize="20px"
-                className="btn-prev"
-              />
+              {isLoading ? (
+                <Skeleton circle width={35} height={35} />
+              ) : (
+                <ChevronBtn
+                  direction="left"
+                  btnSize="35px"
+                  chevronSize="20px"
+                  onClick={() => swiperRef.current?.slidePrev()}
+                  className="btn-prev"
+                />
+              )}
               <div className="hall-marquee-box flex min-w-0 flex-1 flex-col items-center justify-center overflow-hidden">
-                <MarqueeText
-                  text={activeItem?.artistDisplayName || 'Unknown'}
-                  className="text-white font-semibold text-[18px] mb-[4px]"
-                />
+                {isLoading ? (
+                  <>
+                    <Skeleton width={170} height={18} />
+                    <Skeleton width={130} height={16} />
+                    <Skeleton width={190} height={16} />
+                  </>
+                ) : (
+                  <>
+                    <MarqueeText
+                      text={activeItem?.artistDisplayName || 'Unknown'}
+                      className="text-white font-semibold text-[18px] mb-[4px]"
+                    />
 
-                <MarqueeText
-                  text={activeItem?.artistRole}
-                  className="text-white text-[16px]"
-                />
+                    <MarqueeText
+                      text={activeItem?.artistRole}
+                      className="text-white text-[16px]"
+                    />
 
-                <MarqueeText
-                  text={activeItem?.artistDisplayBio}
-                  className="text-white text-[16px]"
-                />
+                    <MarqueeText
+                      text={activeItem?.artistDisplayBio}
+                      className="text-white text-[16px]"
+                    />
+                  </>
+                )}
               </div>
-              <ChevronBtn
-                direction="right"
-                btnSize="35px"
-                chevronSize="20px"
-                className="btn-next"
-              />
+              {isLoading ? (
+                <Skeleton circle width={35} height={35} />
+              ) : (
+                <ChevronBtn
+                  direction="right"
+                  btnSize="35px"
+                  chevronSize="20px"
+                  onClick={() => swiperRef.current?.slideNext()}
+                  className="btn-next"
+                />
+              )}
             </div>
           </div>
         </div>
       </div>
-    </>
+    </SkeletonTheme>
   )
 }

@@ -116,3 +116,20 @@
 .hall-marquee-row.is-overflowing .hall-marquee-copy {
   display: inline-block;
 }
+
+.hall-skeleton-description {
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  display: flex;
+  width: 430px;
+  height: 40%;
+  transform: translateX(-50%);
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  border-radius: 30px;
+  background: linear-gradient(var(--glass-bg), var(--glass-bg2));
+  backdrop-filter: blur(10px);
+  padding: 20px;
+}
